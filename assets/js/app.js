@@ -345,7 +345,7 @@
   $('#readerCopy').addEventListener('click', () => copyPoem(state.reader.list[state.reader.index].id));
   $('#readerFav').addEventListener('click', () => { toggleFav(state.reader.list[state.reader.index].id); paintReader(); });
 
-  reader.addEventListener('click', (e) => { if (e.target.hasAttribute('data-close')) closeReader(); });
+  reader.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) closeReader(); });
 
   /* ---------- المحفوظات والنسخ ---------- */
   function toggleFav(id) {
@@ -505,7 +505,7 @@
   }
   function closeModal() { modal.hidden = true; document.body.style.overflow = ''; }
   $('#openEditor').addEventListener('click', openModal);
-  modal.addEventListener('click', (e) => { if (e.target.hasAttribute('data-close')) closeModal(); });
+  modal.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) closeModal(); });
 
   $('#editorApply').addEventListener('click', () => {
     try {

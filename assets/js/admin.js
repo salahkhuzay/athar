@@ -13,8 +13,10 @@
   const clone = (o) => JSON.parse(JSON.stringify(o));
 
   const PASS_KEY = 'athar-admin-pass';
+  const LOCK_KEY = 'athar-admin-lock';
   const DEFAULT_PASS = 'athar2026';
   const getPass = () => localStorage.getItem(PASS_KEY) || DEFAULT_PASS;
+  const lockEnabled = () => localStorage.getItem(LOCK_KEY) === '1';
 
   let draft = null;          /* نسخة عمل تُحرَّر ثم تُحفظ */
   let dirty = false;
@@ -60,7 +62,7 @@
   function openAdmin() {
     draft = clone(window.Athar.getJSON());
     dirty = false; editingId = null;
-    if (!unlocked) { gate.hidden = false; document.body.style.overflow = 'hidden'; setTimeout(() => $('#gatePass').focus(), 60); return; }
+    if (lockEnabled() && !unlocked) { gate.hidden = false; document.body.style.overflow = 'hidden'; setTimeout(() => $('#gatePass').focus(), 60); return; }
     showPanel();
   }
   function showPanel() {
@@ -346,8 +348,13 @@
           '<button class="btn btn--line btn--sm" id="bkReset" type="button">استعادة</button>' +
         '</div>' +
         '<div class="backup__card">' +
+          '<h4>قفل اللوحة</h4>' +
+          '<p>الافتراضي: دخول مباشر بدون رمز. فعّل القفل إن أردت طلب الرمز عند فتح اللوحة على هذا الجهاز.</p>' +
+          '<label class="check"><input type="checkbox" id="bkLock"' + (lockEnabled() ? ' checked' : '') + '> طلب رمز الدخول عند فتح لوحة التحكم</label>' +
+        '</div>' +
+        '<div class="backup__card">' +
           '<h4>تغيير رمز الدخول</h4>' +
-          '<p>الرمز الحالي: <code>' + esc(getPass()) + '</code> — غيّره إلى رمز خاص بك (يُحفظ في متصفحك فقط).</p>' +
+          '<p>الرمز الحالي: <code>' + esc(getPass()) + '</code> — يُطلب فقط عند تفعيل «قفل اللوحة» أعلاه.</p>' +
           '<div class="fin-row"><input class="fin" id="bkPass1" type="text" placeholder="رمز جديد" dir="ltr"><input class="fin" id="bkPass2" type="text" placeholder="تأكيد الرمز" dir="ltr"></div>' +
           '<button class="btn btn--line btn--sm" id="bkPassSave" type="button">تغيير الرمز</button>' +
         '</div>' +
@@ -388,6 +395,17 @@
       draft = clone(window.Athar.getJSON()); dirty = false;
       renderTab();
       window.Athar.toast(ok ? 'استُعيدت البيانات المنشورة' : 'تعذّر الوصول للملف الأصلي');
+    });
+
+    $('#bkLock').addEventListener('change', (e) => {
+      if (e.target.checked) {
+        localStorage.setItem(LOCK_KEY, '1');
+        sessionStorage.removeItem('athar-admin-unlocked'); unlocked = false;
+        window.Athar.toast('سيُطلب الرمز عند فتح اللوحة من الآن');
+      } else {
+        localStorage.removeItem(LOCK_KEY);
+        window.Athar.toast('الدخول مباشر بدون رمز');
+      }
     });
 
     $('#bkPassSave').addEventListener('click', () => {
