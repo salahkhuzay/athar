@@ -489,7 +489,7 @@
     area.innerHTML = '<h1>أَثَر — ديوان ' + esc(state.data.site.poet || '') + '</h1>' +
       state.data.poems.map((p) =>
         '<section><h2>' + esc(p.title) + ' <span>(' + esc([p.category, p.year].filter(Boolean).join(' · ')) + ')</span></h2>' +
-        p.verses.map((v) => '<p class="pv">' + esc(v.sadr) + ' <span class="ps">◆</span> ' + esc(v.ajoz) + '</p>').join('') +
+        p.verses.map((v) => '<p class="pv">' + esc(v.sadr) + (v.ajoz ? ' <span class="ps">◆</span> ' + esc(v.ajoz) : '') + '</p>').join('') +
         '</section>').join('');
   }
   $('#printBtn').addEventListener('click', () => { renderPrintArea(); setTimeout(() => window.print(), 120); });
