@@ -380,6 +380,9 @@
   function renderBackupTab() {
     body.innerHTML =
       '<div class="backup">' +
+        '<div class="backup__card backup__card--warn"><h4>حالة النشر للزوار</h4>' +
+          '<p id="pubStatusText">جارٍ فحص النسخة المنشورة…</p>' +
+          '<button class="btn btn--gold btn--sm" id="bkExport2" type="button">تنزيل poems.json للنشر</button></div>' +
         '<div class="backup__card"><h4>١) تنزيل poems.json</h4>' +
           '<p>ملفك المحدَّث كاملاً — ضعهُ فوق <code>data/poems.json</code> في المستودع فيتحدّث موقعك المنشور.</p>' +
           '<button class="btn btn--gold btn--sm" id="bkExport" type="button">تنزيل الملف</button></div>' +
@@ -390,25 +393,42 @@
           '<p>احذف نسختك المحلية وعد إلى محتوى المستودع الأصلي.</p>' +
           '<button class="btn btn--line btn--sm" id="bkReset" type="button">استعادة</button></div>' +
         '<div class="backup__card"><h4>قفل اللوحة</h4>' +
-          '<p>الافتراضي دخولٌ مباشر. فعّل القفل ليُطلب الرمز عند الفتح على هذا الجهاز.</p>' +
+          '<p>الافتراضي دخولٌ مباشر على جهازك. يُفعَّل القفل تلقائياً عند تغيير الرمز، أو يدوياً من هنا.</p>' +
           '<label class="check"><input type="checkbox" id="bkLock"' + (lockEnabled() ? ' checked' : '') + '> طلب رمز الدخول عند فتح اللوحة</label></div>' +
         '<div class="backup__card"><h4>تغيير الرمز</h4>' +
-          '<p>الرمز الحالي: <code>' + esc(getPass()) + '</code> — يُستخدم فقط عند تفعيل القفل.</p>' +
+          '<p>الرمز الحالي: <code>' + esc(getPass()) + '</code> — تغيير الرمز يُفعّل القفل تلقائياً.</p>' +
           '<div class="fin-row"><input class="fin" id="bkPass1" type="text" placeholder="رمز جديد" dir="ltr"><input class="fin" id="bkPass2" type="text" placeholder="تأكيد" dir="ltr"></div>' +
           '<button class="btn btn--line btn--sm" id="bkPassSave" type="button">تغيير الرمز</button></div>' +
         '<div class="backup__card backup__card--warn"><h4>كيف ينشر تعديلي للزوار؟</h4>' +
           '<p>الحفظ هنا يخزّن نسختك في متصفحك ويُحدّث الموقع أمامك فوراً. ليراها الجميع: نزّل <code>poems.json</code> وارفعه إلى مستودعك على GitHub (مجهد data → Add file → Upload files)، أو أرسله لصديقك التقني ليرفعه. لا يحتاج الموقع أي خادم.</p></div>' +
       '</div>';
 
-    $('#bkExport').addEventListener('click', () => {
+    const exportJson = () => {
       const json = dirty ? draft : window.Athar.getJSON();
       const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json;charset=utf-8' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob); a.download = 'poems.json';
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+      const el = document.createElement('a');
+      el.href = URL.createObjectURL(blob); el.download = 'poems.json';
+      document.body.appendChild(el); el.click(); el.remove();
+      setTimeout(() => URL.revokeObjectURL(el.href), 1500);
       window.Athar.toast('نُزّل poems.json');
-    });
+    };
+    $('#bkExport').addEventListener('click', exportJson);
+    $('#bkExport2').addEventListener('click', exportJson);
+
+    /* فحص: هل نسختك المحفوظة وصلت للزوار؟ */
+    (async () => {
+      const el = $('#pubStatusText'); if (!el) return;
+      try {
+        const r = await fetch('./data/poems.json?ts=' + Date.now(), { cache: 'no-store' });
+        const pub = await r.json();
+        const mine = window.Athar.getJSON();
+        if (JSON.stringify(pub) === JSON.stringify(mine)) {
+          el.innerHTML = '✓ <b>النسخة المنشورة مطابقة</b> لنسختك المحفوظة — الزوار يرون تعديلاتك.';
+        } else {
+          el.innerHTML = '⚠ <b>نسختك المحفوظة لم تصل للزوار بعد.</b> نزّل الملف بالزر وارفعه إلى مجلد <code>data</code> في مستودعك على GitHub (Add file → Upload files)، أو أرسله في المحادثة ليُنشر لك.';
+        }
+      } catch (e) { el.textContent = 'تعذّر فحص النسخة المنشورة.'; }
+    })();
     $('#bkImport').addEventListener('change', (e) => {
       const f = e.target.files[0]; if (!f) return;
       const r = new FileReader();
@@ -441,7 +461,9 @@
       if (!p1 || p1.length < 4) { alert('الرمز 4 خانات فأكثر'); return; }
       if (p1 !== p2) { alert('التأكيد غير مطابق'); return; }
       localStorage.setItem(PASS_KEY, p1);
-      window.Athar.toast('تم تغيير الرمز'); renderBackupTab();
+      localStorage.setItem(LOCK_KEY, '1');
+      sessionStorage.removeItem('athar-admin-unlocked'); unlocked = false;
+      window.Athar.toast('تم تغيير الرمز وتفعيل القفل تلقائياً'); renderBackupTab();
     });
   }
 })();
