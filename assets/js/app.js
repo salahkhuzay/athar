@@ -207,7 +207,7 @@
     const p = featuredPoem();
     if (!p) { box.innerHTML = ''; return; }
     box.innerHTML = p.verses.slice(0, 4).map((v) =>
-      '<div class="fverse"><p>' + esc(v.sadr) + '</p><span class="sep" aria-hidden="true"></span><p>' + esc(v.ajoz) + '</p></div>').join('');
+      '<div class="fverse"><p>' + esc(v.sadr) + '</p>' + (v.ajoz ? '<span class="sep" aria-hidden="true"></span><p>' + esc(v.ajoz) + '</p>' : '') + '</div>').join('');
     const by = $('#featuredBy');
     if (by) by.textContent = '«' + p.title + '» — ديوان ' + (state.data.site.poet || '');
     const open = $('#featuredOpen');
@@ -251,7 +251,7 @@
   function cardHTML(p) {
     const fav = state.bookmarks.has(p.id);
     const preview = p.verses.slice(0, 2).map((v) =>
-      '<p class="cverse">' + hl(v.sadr, state.re) + '</p><p class="cverse cverse--ajoz">' + hl(v.ajoz, state.re) + '</p>').join('');
+      '<p class="cverse">' + hl(v.sadr, state.re) + '</p>' + (v.ajoz ? '<p class="cverse cverse--ajoz">' + hl(v.ajoz, state.re) + '</p>' : '')).join('');
     return '<article class="card reveal" data-id="' + esc(p.id) + '">' +
       '<div class="card__top">' +
         '<h3 class="card__title"><button type="button" class="js-open" data-id="' + esc(p.id) + '">' + hl(p.title, state.re) + '</button></h3>' +
@@ -319,7 +319,7 @@
     $('#readerTitle').textContent = p.title;
     $('#readerMood').textContent = p.mood || '';
     $('#readerVerses').innerHTML = p.verses.map((v) =>
-      '<div class="rverse"><p>' + esc(v.sadr) + '</p><span class="sep" aria-hidden="true"></span><p>' + esc(v.ajoz) + '</p></div>').join('');
+      '<div class="rverse"><p>' + esc(v.sadr) + '</p>' + (v.ajoz ? '<span class="sep" aria-hidden="true"></span><p>' + esc(v.ajoz) + '</p>' : '') + '</div>').join('');
     const fav = state.bookmarks.has(p.id);
     const favBtn = $('#readerFav');
     favBtn.classList.toggle('is-on', fav);
@@ -364,7 +364,7 @@
 
   function poemAsText(p) {
     return [p.title, '']
-      .concat(p.verses.map((v) => v.sadr + '  ***  ' + v.ajoz))
+      .concat(p.verses.map((v) => (v.ajoz ? v.sadr + '  ***  ' + v.ajoz : v.sadr)))
       .concat(['', '— ' + (state.data.site.poet || ''), location.origin + location.pathname + '#p-' + p.id])
       .join('\n');
   }
