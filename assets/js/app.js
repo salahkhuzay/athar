@@ -1,0 +1,599 @@
+/* =========================================================
+   أَثَر — ديوان صلاح الدين الخزاعي
+   المصدر الوحيد للبيانات: data/poems.json
+   ========================================================= */
+(function () {
+  'use strict';
+
+  const $  = (s, c = document) => c.querySelector(s);
+  const $$ = (s, c = document) => Array.from(c.querySelectorAll(s));
+
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+
+  const store = {
+    get(k, f = null) { try { const v = localStorage.getItem(k); return v === null ? f : v; } catch (e) { return f; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+    del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  };
+
+  /* تطبيع عربي للبحث: يتسامح مع التشكيل والهمزات والألف المقصورة والتاء المربوطة */
+  const norm = (s) => String(s ?? '')
+    .replace(/[\u064B-\u0652\u0670\u0640\u06DB\u06DD]/g, '')
+    .replace(/[أإآٱٲٳ]/g, 'ا')
+    .replace(/[ىيئئي]/g, 'ي')
+    .replace(/[هة]/g, 'ه')
+    .replace(/[وؤء]/g, 'و')
+    .replace(/\s+/g, ' ').trim().toLowerCase();
+
+  const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const TASHKEEL = '[\\u064B-\\u0652\\u0670\\u0640]?';
+  const VARIANT = { 'ا': '[أإآٱٲٳا]', 'ي': '[يىئئي]', 'ه': '[هة]', 'و': '[وؤو]' };
+
+  function buildRe(q) {
+    const nq = norm(q);
+    if (!nq) return null;
+    const body = Array.from(nq).map((ch) => (VARIANT[ch] || escapeRe(ch)) + TASHKEEL).join('');
+    try { return { test: new RegExp(body, 'i'), split: new RegExp('(' + body + ')', 'gi') }; }
+    catch (e) { return null; }
+  }
+
+  function hl(text, re) {
+    const raw = String(text ?? '');
+    if (!re) return esc(raw);
+    return raw.split(re.split).map((p, i) => (i % 2 === 1 ? '<mark>' + esc(p) + '</mark>' : esc(p))).join('');
+  }
+
+  const toastEl = $('#toast');
+  let toastTimer;
+  function toast(msg) {
+    if (!toastEl) return;
+    toastEl.textContent = msg; toastEl.hidden = false;
+    requestAnimationFrame(() => toastEl.classList.add('is-visible'));
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      toastEl.classList.remove('is-visible');
+      setTimeout(() => { toastEl.hidden = true; }, 320);
+    }, 2200);
+  }
+
+  /* ---------- الحالة ---------- */
+  const state = {
+    data: { site: {}, categories: [], poems: [] },
+    raw: '', source: '',
+    cat: 'all', q: '', re: null,
+    bookmarks: new Set(JSON.parse(store.get('athar-bookmarks', '[]') || '[]')),
+    reader: { list: [], index: -1, manuscript: store.get('athar-manuscript', '0') === '1' }
+  };
+
+  const DEFAULT_MARQUEE = [
+    'شِعرٌ يَبقى بَعدَ الرَّحيل', 'الحَرفُ أمانَة', 'كُلُّ قَصيدةٍ أَثَر',
+    'مِن ماءِ الحِبرِ يَسقي الوَرَق', 'الكَلِمَةُ الصادِقَةُ لا تَموت', 'لأنّ بعضَ الكلامِ يبقى'
+  ];
+
+  /* ---------- تحميل البيانات ---------- */
+  async function loadData() {
+    const override = store.get('athar-data-override');
+    if (override) {
+      try {
+        const json = JSON.parse(override);
+        if (json && Array.isArray(json.poems)) return { json, raw: JSON.stringify(json, null, 2), source: 'حفظ محلي' };
+      } catch (e) { store.del('athar-data-override'); }
+    }
+    try {
+      const r = await fetch('./data/poems.json?v=' + Date.now(), { cache: 'no-store' });
+      if (r.ok) {
+        const text = await r.text();
+        const json = JSON.parse(text);
+        if (json && Array.isArray(json.poems)) return { json, raw: text, source: './data/poems.json' };
+      }
+    } catch (e) {}
+    const fb = $('#fallbackData');
+    if (fb && fb.textContent.trim()) {
+      try {
+        const json = JSON.parse(fb.textContent.replace(/<\\\//g, '</'));
+        if (json && Array.isArray(json.poems)) return { json, raw: JSON.stringify(json, null, 2), source: 'نسخة مضمّنة', inline: true };
+      } catch (e) {}
+    }
+    return { json: null, raw: '', source: '' };
+  }
+
+  function normalize(json) {
+    const site = json.site || {};
+    const poems = (json.poems || []).map((p, i) => ({
+      idx: i,
+      id: p.id || ('poem-' + (i + 1)),
+      title: p.title || 'بلا عنوان',
+      category: p.category || '',
+      year: p.year || '', date: p.date || '',
+      mood: p.mood || '',
+      excerpt: p.excerpt || p.epigraph || '',
+      accent: p.accent || '',
+      tags: Array.isArray(p.tags) ? p.tags : [],
+      featured: !!p.featured,
+      verses: (p.verses || p.lines || []).map((v) => ({
+        sadr: v.sadr ?? v['صدر'] ?? '',
+        ajoz: v.ajoz ?? v.ajz ?? v['عجز'] ?? ''
+      })).filter((v) => v.sadr || v.ajoz)
+    }));
+    const cats = (json.categories || []).filter((c) => c && c.id)
+      .map((c) => ({ id: c.id, label: c.label || c.id, description: c.description || '' }));
+    Array.from(new Set(poems.map((p) => p.category).filter(Boolean)))
+      .forEach((id) => { if (!cats.some((c) => c.id === id)) cats.push({ id, label: id, description: '' }); });
+    return { site, categories: cats, poems };
+  }
+
+  /* ---------- الربط الثابت ---------- */
+  function bindStatic() {
+    const s = state.data.site;
+    const poet = s.poet || 'صلاح الدين الخزاعي';
+    ['#brandPoet', '#heroPoet', '#footerPoet', '#aboutName'].forEach((sel) => {
+      const el = $(sel); if (el) el.textContent = poet;
+    });
+    document.title = 'أثر | ديوان الشاعر ' + poet;
+
+    const hq = s.heroQuote;
+    const hqEl = $('#heroQuote');
+    if (hqEl) {
+      hqEl.innerHTML = hq
+        ? '<p><span class="qmark">«</span>' + esc(hq.sadr) + '</p><p>' + esc(hq.ajoz) + '<span class="qmark">»</span></p>'
+        : '';
+    }
+
+    const img = s.heroImage ? encodeURI(s.heroImage) : '';
+    if (img) {
+      const probe = new Image();
+      probe.onload = () => document.documentElement.style.setProperty('--hero-bg', "url('" + img + "')");
+      probe.src = img;
+    }
+
+    const bio = $('#bioText');
+    if (bio) bio.innerHTML = (Array.isArray(s.bio) ? s.bio : [s.bio].filter(Boolean)).map((p) => '<p>' + esc(p) + '</p>').join('');
+    const heading = $('#aboutHeading');
+    if (heading && s.aboutHeading) heading.textContent = s.aboutHeading;
+    const bullets = $('#aboutBullets');
+    if (bullets) bullets.innerHTML = (s.aboutBullets || []).map((b) => '<li>' + esc(b) + '</li>').join('');
+
+    const ct = $('#contactText');
+    if (ct && s.contact && s.contact.text) ct.textContent = s.contact.text;
+    renderContact(s.contact || {});
+
+    const y = $('#footerYear'); if (y) y.textContent = new Date().getFullYear();
+  }
+
+  const ICONS = {
+    email: '<path d="M3 6h18v12H3z"/><path d="M3 7l9 6 9-6"/>',
+    whatsapp: '<path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12Z"/>',
+    facebook: '<path d="M14 8h2V5h-2a3 3 0 0 0-3 3v2H9v3h2v6h3v-6h2l1-3h-3V8.8c0-.5.4-.8 1-.8Z"/>',
+    instagram: '<rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="17" cy="7" r=".9" fill="currentColor"/>',
+    x: '<path d="M5 5l14 14M19 5L5 19"/>',
+    youtube: '<rect x="3" y="6" width="18" height="12" rx="4"/><path d="M11 9.5l4 2.5-4 2.5z"/>'
+  };
+
+  function renderContact(c) {
+    const links = $('#contactLinks'); if (!links) return;
+    const items = [];
+    if (c.email) items.push(['mailto:' + c.email, c.email, ICONS.email]);
+    if (c.whatsapp) items.push(['https://wa.me/' + String(c.whatsapp).replace(/[^\d]/g, ''), 'واتساب', ICONS.whatsapp]);
+    if (c.facebook) items.push([c.facebook, 'فيسبوك', ICONS.facebook]);
+    if (c.instagram) items.push([c.instagram, 'إنستغرام', ICONS.instagram]);
+    if (c.x) items.push([c.x, 'إكس', ICONS.x]);
+    if (c.youtube) items.push([c.youtube, 'يوتيوب', ICONS.youtube]);
+    if (!items.length) items.push(['#', 'أضف وسائل تواصل في data/poems.json', ICONS.email]);
+    links.innerHTML = items.map(([href, label, icon]) =>
+      '<a class="clink" href="' + esc(href) + '" target="_blank" rel="noopener noreferrer">' +
+      '<svg viewBox="0 0 24 24" aria-hidden="true">' + icon + '</svg><span>' + esc(label) + '</span></a>').join('');
+  }
+
+  /* ---------- الشريط المتحرك ---------- */
+  function renderMarquee() {
+    const track = $('#marqueeTrack'); if (!track) return;
+    const items = state.data.site.marquee && state.data.site.marquee.length ? state.data.site.marquee : DEFAULT_MARQUEE;
+    const half = items.map((t) => '<span class="marquee__item">' + esc(t) + '</span>').join('');
+    track.innerHTML = half + half; /* تكرار لحلقة لا نهائية سلسة */
+  }
+
+  /* ---------- قصيدة مختارة ---------- */
+  function featuredPoem() {
+    const s = state.data.site;
+    return state.data.poems.find((p) => p.id === s.featuredId)
+      || state.data.poems.find((p) => p.featured)
+      || state.data.poems[0];
+  }
+
+  function renderFeatured() {
+    const box = $('#featuredPoem'); if (!box) return;
+    const p = featuredPoem();
+    if (!p) { box.innerHTML = ''; return; }
+    box.innerHTML = p.verses.slice(0, 4).map((v) =>
+      '<div class="fverse"><p>' + esc(v.sadr) + '</p><span class="sep" aria-hidden="true"></span><p>' + esc(v.ajoz) + '</p></div>').join('');
+    const by = $('#featuredBy');
+    if (by) by.textContent = '«' + p.title + '» — ديوان ' + (state.data.site.poet || '');
+    const open = $('#featuredOpen');
+    if (open) open.onclick = () => openReader(p.id);
+  }
+
+  /* ---------- الأبواب (chips) ---------- */
+  function renderChips() {
+    const box = $('#categoryChips'); if (!box) return;
+    const counts = {};
+    state.data.poems.forEach((p) => { counts[p.category] = (counts[p.category] || 0) + 1; });
+    const chips = [{ id: 'all', label: 'كل القصائد', count: state.data.poems.length }]
+      .concat(state.data.categories.map((c) => ({ id: c.id, label: c.label, count: counts[c.id] || 0 })))
+      .concat([{ id: 'fav', label: '★ المحفوظات', count: state.bookmarks.size }]);
+    box.innerHTML = chips.map((c) =>
+      '<button class="chip' + (state.cat === c.id ? ' is-active' : '') + '" type="button" data-cat="' + esc(c.id) + '" aria-pressed="' + (state.cat === c.id) + '">' +
+      '<span>' + esc(c.label) + '</span><span class="chip__count">' + c.count + '</span></button>').join('');
+  }
+
+  /* ---------- التصفية ---------- */
+  function poemText(p) {
+    return [p.title, p.mood, p.excerpt, p.category, p.tags.join(' '),
+      p.verses.map((v) => v.sadr + ' ' + v.ajoz).join(' ')].join(' ');
+  }
+
+  function visiblePoems() {
+    let list = state.data.poems.slice();
+    if (state.cat === 'fav') list = list.filter((p) => state.bookmarks.has(p.id));
+    else if (state.cat !== 'all') list = list.filter((p) => p.category === state.cat);
+    if (state.re) list = list.filter((p) => state.re.test.test(poemText(p)));
+    return list.sort((a, b) => a.idx - b.idx);
+  }
+
+  /* ---------- البطاقات ---------- */
+  const I = {
+    star: '<path d="M12 4l2.3 4.9 5.2.7-3.8 3.7.9 5.3L12 16.9 7.4 18.6l.9-5.3L4.5 9.6l5.2-.7z"/>',
+    copy: '<rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 5.5A2.5 2.5 0 0 0 12.5 3H6.5A2.5 2.5 0 0 0 4 5.5v6A2.5 2.5 0 0 0 6.5 14"/>',
+    arrow: '<path d="M19 12H5M11 6l-6 6 6 6"/>'
+  };
+
+  function cardHTML(p) {
+    const fav = state.bookmarks.has(p.id);
+    const preview = p.verses.slice(0, 2).map((v) =>
+      '<p class="cverse">' + hl(v.sadr, state.re) + '</p><p class="cverse cverse--ajoz">' + hl(v.ajoz, state.re) + '</p>').join('');
+    return '<article class="card reveal" data-id="' + esc(p.id) + '">' +
+      '<div class="card__top">' +
+        '<h3 class="card__title"><button type="button" class="js-open" data-id="' + esc(p.id) + '">' + hl(p.title, state.re) + '</button></h3>' +
+        (p.year ? '<span class="card__year">' + esc(p.year) + '</span>' : '') +
+      '</div>' +
+      (p.mood ? '<p class="card__mood">' + hl(p.mood, state.re) + '</p>' : '') +
+      '<div class="card__preview">' + preview + '</div>' +
+      (p.excerpt ? '<p class="card__excerpt">' + hl(p.excerpt, state.re) + '</p>' : '') +
+      '<div class="card__foot">' +
+        '<button class="card__open js-open" type="button" data-id="' + esc(p.id) + '" aria-label="اقرأ قصيدة ' + esc(p.title) + ' كاملة">' +
+          '<span>اقرأ القصيدة كاملة</span><svg viewBox="0 0 24 24" aria-hidden="true">' + I.arrow + '</svg></button>' +
+        '<span class="spacer"></span>' +
+        '<button class="icon-btn js-fav' + (fav ? ' is-on' : '') + '" type="button" data-id="' + esc(p.id) + '" aria-pressed="' + fav + '" aria-label="حفظ القصيدة" title="حفظ">' +
+          '<svg viewBox="0 0 24 24" aria-hidden="true">' + I.star + '</svg></button>' +
+        '<button class="icon-btn js-copy" type="button" data-id="' + esc(p.id) + '" aria-label="نسخ القصيدة" title="نسخ القصيدة">' +
+          '<svg viewBox="0 0 24 24" aria-hidden="true">' + I.copy + '</svg></button>' +
+      '</div></article>';
+  }
+
+  function renderCards() {
+    const list = $('#poemsList'), empty = $('#emptyState'), meta = $('#resultsMeta');
+    const poems = visiblePoems();
+    list.innerHTML = poems.map(cardHTML).join('');
+    empty.hidden = poems.length !== 0;
+    meta.textContent = poems.length === state.data.poems.length
+      ? state.data.poems.length + ' قصيدة في الديوان'
+      : 'يعرض ' + poems.length + ' من ' + state.data.poems.length + ' قصيدة' + (state.q ? ' — بحث: «' + state.q + '»' : '');
+    observeReveals(list);
+  }
+
+  /* ---------- الإحصاءات ---------- */
+  function renderStats() {
+    const el = $('#aboutStats'); if (!el) return;
+    const verses = state.data.poems.reduce((a, p) => a + p.verses.length, 0);
+    el.innerHTML =
+      '<div><dd>' + state.data.poems.length + '</dd><dt>قصيدة في الديوان</dt></div>' +
+      '<div><dd>' + verses + '</dd><dt>بيتٌ من الشِّعر</dt></div>' +
+      '<div><dd>' + state.data.categories.length + '</dd><dt>أبواب شعرية</dt></div>';
+  }
+
+  function renderAll() {
+    bindStatic(); renderMarquee(); renderFeatured(); renderChips(); renderCards(); renderStats();
+  }
+
+  /* ---------- القارئ ---------- */
+  const reader = $('#readerModal');
+
+  function openReader(id, list) {
+    const pool = list || visiblePoems();
+    let idx = pool.findIndex((p) => p.id === id);
+    let poolUsed = pool;
+    if (idx === -1) { poolUsed = state.data.poems.slice(); idx = poolUsed.findIndex((p) => p.id === id); }
+    if (idx === -1) return;
+    state.reader.list = poolUsed; state.reader.index = idx;
+    paintReader();
+    reader.hidden = false;
+    document.body.style.overflow = 'hidden';
+    $('.reader__body').scrollTop = 0;
+  }
+
+  function paintReader() {
+    const p = state.reader.list[state.reader.index];
+    if (!p) return;
+    $('#readerMeta').textContent = [p.category, p.year, p.verses.length + ' بيتاً'].filter(Boolean).join(' · ');
+    $('#readerTitle').textContent = p.title;
+    $('#readerMood').textContent = p.mood || '';
+    $('#readerVerses').innerHTML = p.verses.map((v) =>
+      '<div class="rverse"><p>' + esc(v.sadr) + '</p><span class="sep" aria-hidden="true"></span><p>' + esc(v.ajoz) + '</p></div>').join('');
+    const fav = state.bookmarks.has(p.id);
+    const favBtn = $('#readerFav');
+    favBtn.classList.toggle('is-on', fav);
+    favBtn.setAttribute('aria-pressed', String(fav));
+    const panel = $('.reader__panel');
+    panel.classList.toggle('is-manuscript', state.reader.manuscript);
+    $('#readerManuscript').setAttribute('aria-pressed', String(state.reader.manuscript));
+    $('#readerPrev').disabled = state.reader.index >= state.reader.list.length - 1;
+    $('#readerNext').disabled = state.reader.index <= 0;
+  }
+
+  function closeReader() { reader.hidden = true; document.body.style.overflow = ''; }
+
+  $('#readerPrev').addEventListener('click', () => { state.reader.index = Math.min(state.reader.list.length - 1, state.reader.index + 1); paintReader(); $('.reader__body').scrollTop = 0; });
+  $('#readerNext').addEventListener('click', () => { state.reader.index = Math.max(0, state.reader.index - 1); paintReader(); $('.reader__body').scrollTop = 0; });
+  $('#readerCloseAll').addEventListener('click', () => { closeReader(); $('#poems').scrollIntoView({ behavior: 'smooth' }); });
+  $('#readerManuscript').addEventListener('click', () => {
+    state.reader.manuscript = !state.reader.manuscript;
+    store.set('athar-manuscript', state.reader.manuscript ? '1' : '0');
+    paintReader();
+    toast(state.reader.manuscript ? 'وضع المخطوط' : 'الوضع الليلي');
+  });
+  $('#readerCopy').addEventListener('click', () => copyPoem(state.reader.list[state.reader.index].id));
+  $('#readerFav').addEventListener('click', () => { toggleFav(state.reader.list[state.reader.index].id); paintReader(); });
+
+  reader.addEventListener('click', (e) => { if (e.target.hasAttribute('data-close')) closeReader(); });
+
+  /* ---------- المحفوظات والنسخ ---------- */
+  function toggleFav(id) {
+    if (state.bookmarks.has(id)) { state.bookmarks.delete(id); toast('أُزيلت من المحفوظات'); }
+    else { state.bookmarks.add(id); toast('حُفظت في المحفوظات ✦'); }
+    store.set('athar-bookmarks', JSON.stringify(Array.from(state.bookmarks)));
+    renderChips();
+    if (state.cat === 'fav') renderCards();
+    $$('.js-fav[data-id="' + (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]').forEach((b) => {
+      const on = state.bookmarks.has(id);
+      b.classList.toggle('is-on', on); b.setAttribute('aria-pressed', String(on));
+    });
+  }
+
+  function findPoem(id) { return state.data.poems.find((p) => p.id === id); }
+
+  function poemAsText(p) {
+    return [p.title, '']
+      .concat(p.verses.map((v) => v.sadr + '  ***  ' + v.ajoz))
+      .concat(['', '— ' + (state.data.site.poet || ''), location.origin + location.pathname + '#p-' + p.id])
+      .join('\n');
+  }
+
+  async function copyText(text, msg) {
+    try {
+      if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(text);
+      else {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.setAttribute('readonly', '');
+        ta.style.cssText = 'position:fixed;inset-block-start:-1000px;opacity:0';
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      toast(msg);
+    } catch (e) { toast('تعذّر النسخ'); }
+  }
+  const copyPoem = (id) => { const p = findPoem(id); if (p) copyText(poemAsText(p), 'نُسِخَت القصيدة ✓'); };
+
+  /* ---------- أحداث مفوّضة ---------- */
+  document.addEventListener('click', (e) => {
+    const chip = e.target.closest('.chip');
+    if (chip) { state.cat = chip.getAttribute('data-cat'); renderChips(); renderCards(); return; }
+
+    const open = e.target.closest('.js-open');
+    if (open) { openReader(open.getAttribute('data-id')); return; }
+
+    const fav = e.target.closest('.js-fav');
+    if (fav) { toggleFav(fav.getAttribute('data-id')); return; }
+
+    const copy = e.target.closest('.js-copy');
+    if (copy) { copyPoem(copy.getAttribute('data-id')); return; }
+  });
+
+  /* ---------- البحث ---------- */
+  let searchTimer;
+  $('#searchInput').addEventListener('input', (e) => {
+    const v = e.target.value;
+    $('#searchClear').hidden = !v;
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => { state.q = v.trim(); state.re = buildRe(v); renderCards(); }, 130);
+  });
+  $('#searchClear').addEventListener('click', () => {
+    $('#searchInput').value = ''; $('#searchClear').hidden = true;
+    state.q = ''; state.re = null; renderCards(); $('#searchInput').focus();
+  });
+  $('#resetFilters').addEventListener('click', () => {
+    $('#searchInput').value = ''; $('#searchClear').hidden = true;
+    state.q = ''; state.re = null; state.cat = 'all';
+    renderChips(); renderCards();
+  });
+
+  /* ---------- القائمة والجوال ---------- */
+  const navToggle = $('#navToggle'), nav = $('#primaryNav');
+  navToggle.addEventListener('click', () => {
+    const open = nav.classList.toggle('is-open');
+    navToggle.setAttribute('aria-expanded', String(open));
+    navToggle.setAttribute('aria-label', open ? 'إغلاق القائمة' : 'فتح القائمة');
+  });
+  nav.addEventListener('click', (e) => {
+    if (e.target.closest('a')) { nav.classList.remove('is-open'); navToggle.setAttribute('aria-expanded', 'false'); }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    const t = e.target;
+    const typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+    if (e.key === 'Escape') {
+      nav.classList.remove('is-open'); navToggle.setAttribute('aria-expanded', 'false');
+      if (!reader.hidden) closeReader();
+      if (!$('#editorModal').hidden) closeModal();
+    }
+    if (typing) return;
+    if (e.key === '/') { e.preventDefault(); $('#searchInput').focus(); }
+    if (!reader.hidden) {
+      if (e.key === 'ArrowLeft') $('#readerPrev').click();   /* التالية في RTL */
+      if (e.key === 'ArrowRight') $('#readerNext').click();  /* السابقة في RTL */
+    }
+  });
+
+  /* ---------- التمرير ---------- */
+  const progress = $('#scrollProgress'), toTop = $('#toTop'), topbar = $('#topbar');
+  let ticking = false;
+  function onScroll() {
+    if (ticking) return; ticking = true;
+    requestAnimationFrame(() => {
+      const y = window.scrollY || 0;
+      const h = document.documentElement.scrollHeight - window.innerHeight;
+      progress.style.transform = 'scaleX(' + (h > 0 ? Math.min(1, y / h) : 0) + ')';
+      toTop.classList.toggle('is-visible', y > 600);
+      topbar.classList.toggle('is-stuck', y > 8);
+      ticking = false;
+    });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  toTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+  const spy = new IntersectionObserver((entries) => {
+    entries.forEach((en) => {
+      if (!en.isIntersecting) return;
+      $$('.nav__link').forEach((a) => a.classList.toggle('is-active', a.getAttribute('href') === '#' + en.target.id));
+    });
+  }, { rootMargin: '-45% 0px -50% 0px' });
+  $$('main section[id]').forEach((s) => spy.observe(s));
+
+  /* ---------- الظهور ---------- */
+  const revealObs = new IntersectionObserver((entries) => {
+    entries.forEach((en) => { if (en.isIntersecting) { en.target.classList.add('is-in'); revealObs.unobserve(en.target); } });
+  }, { rootMargin: '0px 0px -8% 0px', threshold: .06 });
+  function observeReveals(root) {
+    $$('.reveal:not(.is-in)', root || document).forEach((el, i) => {
+      el.style.transitionDelay = Math.min(i, 8) * 45 + 'ms';
+      revealObs.observe(el);
+    });
+  }
+
+  /* ---------- الطباعة ---------- */
+  function renderPrintArea() {
+    let area = $('#printArea');
+    if (!area) {
+      area = document.createElement('div');
+      area.id = 'printArea'; area.className = 'print-area';
+      document.body.insertBefore(area, $('.footer'));
+    }
+    area.innerHTML = '<h1>أَثَر — ديوان ' + esc(state.data.site.poet || '') + '</h1>' +
+      state.data.poems.map((p) =>
+        '<section><h2>' + esc(p.title) + ' <span>(' + esc([p.category, p.year].filter(Boolean).join(' · ')) + ')</span></h2>' +
+        p.verses.map((v) => '<p class="pv">' + esc(v.sadr) + ' <span class="ps">◆</span> ' + esc(v.ajoz) + '</p>').join('') +
+        '</section>').join('');
+  }
+  $('#printBtn').addEventListener('click', () => { renderPrintArea(); setTimeout(() => window.print(), 120); });
+
+  /* ---------- محرّر البيانات ---------- */
+  const modal = $('#editorModal'), area = $('#editorArea'), msg = $('#editorMsg');
+  function openModal() {
+    area.value = state.raw || '{}';
+    msg.textContent = ''; msg.className = 'editor-msg';
+    modal.hidden = false; document.body.style.overflow = 'hidden';
+    setTimeout(() => area.focus(), 60);
+  }
+  function closeModal() { modal.hidden = true; document.body.style.overflow = ''; }
+  $('#openEditor').addEventListener('click', openModal);
+  modal.addEventListener('click', (e) => { if (e.target.hasAttribute('data-close')) closeModal(); });
+
+  $('#editorApply').addEventListener('click', () => {
+    try {
+      const json = JSON.parse(area.value);
+      if (!json || !Array.isArray(json.poems)) throw new Error('الحقل poems يجب أن يكون مصفوفة');
+      store.set('athar-data-override', JSON.stringify(json));
+      state.data = normalize(json); state.raw = JSON.stringify(json, null, 2);
+      renderAll();
+      msg.textContent = 'تم التطبيق — ' + state.data.poems.length + ' قصيدة (محفوظة في متصفحك).';
+      msg.className = 'editor-msg is-ok'; toast('تم تحديث البيانات');
+      setTimeout(closeModal, 650);
+    } catch (err) { msg.textContent = 'خطأ في الصيغة: ' + err.message; msg.className = 'editor-msg is-err'; }
+  });
+
+  $('#editorReset').addEventListener('click', async () => {
+    store.del('athar-data-override');
+    const res = await loadData();
+    if (res.json) {
+      state.data = normalize(res.json); state.raw = res.raw;
+      area.value = res.raw; renderAll();
+      msg.textContent = 'استُعيد الملف الأصلي.'; msg.className = 'editor-msg is-ok'; toast('تمت الاستعادة');
+    }
+  });
+
+  $('#editorDownload').addEventListener('click', () => {
+    let text = area.value;
+    try { text = JSON.stringify(JSON.parse(area.value), null, 2); } catch (e) {}
+    const blob = new Blob([text], { type: 'application/json;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'poems.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+    toast('نُزّل الملف poems.json');
+  });
+
+  area.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const s = area.selectionStart, en = area.selectionEnd;
+      area.value = area.value.slice(0, s) + '  ' + area.value.slice(en);
+      area.selectionStart = area.selectionEnd = s + 2;
+    }
+  });
+
+  /* ---------- رابط مباشر لقصيدة ---------- */
+  function focusHash() {
+    const h = decodeURIComponent(location.hash || '');
+    if (!h.startsWith('#p-')) return;
+    setTimeout(() => openReader(h.slice(3)), 250);
+  }
+
+  /* ---------- واجهة برمجية للوحة التحكم ---------- */
+  window.Athar = {
+    getJSON: () => { try { return JSON.parse(state.raw || '{}'); } catch (e) { return {}; } },
+    commit: (json) => {
+      store.set('athar-data-override', JSON.stringify(json));
+      state.data = normalize(json);
+      state.raw = JSON.stringify(json, null, 2);
+      renderAll();
+    },
+    hasOverride: () => !!store.get('athar-data-override'),
+    clearOverride: async () => {
+      store.del('athar-data-override');
+      const res = await loadData();
+      if (res.json) { state.data = normalize(res.json); state.raw = res.raw; renderAll(); return true; }
+      return false;
+    },
+    toast
+  };
+
+  /* ---------- الإقلاع ---------- */
+  (async function init() {
+    const res = await loadData();
+    if (!res.json) {
+      $('#poemsList').innerHTML = '<div class="empty"><p>تعذّر تحميل <code>data/poems.json</code>.</p></div>';
+      return;
+    }
+    state.data = normalize(res.json); state.raw = res.raw; state.source = res.source;
+    if (res.inline) {
+      const note = $('#srcNote');
+      if (note) {
+        note.hidden = false;
+        note.innerHTML = 'تُعرض <b>نسخة البيانات المضمّنة</b> لأن المتصفح منع جلب <code>data/poems.json</code> (فتح الملف مباشرة). عند النشر يُقرأ الملف تلقائياً.';
+      }
+    }
+    renderAll();
+    observeReveals(document);
+    onScroll();
+    focusHash();
+  })();
+})();

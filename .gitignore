@@ -1,0 +1,9 @@
+# أغفل ما يخص النظام والمحرّرات فقط — الموقع لا يحتاج بناءً
+.DS_Store
+Thumbs.db
+*.log
+node_modules/
+.vercel
+.netlify
+.idea/
+.vscode/
