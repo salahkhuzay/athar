@@ -42,6 +42,7 @@
         '<button class="admin__tab is-active" data-tab="poems" role="tab" aria-selected="true">القصائد</button>' +
         '<button class="admin__tab" data-tab="site" role="tab" aria-selected="false">الواجهة والإعدادات</button>' +
         '<button class="admin__tab" data-tab="backup" role="tab" aria-selected="false">النسخ والنشر</button>' +
+        '<button class="admin__tab" data-tab="json" role="tab" aria-selected="false">محرّر JSON</button>' +
       '</nav>' +
       '<div class="admin__body" id="adminBody"></div>' +
     '</div>' +
@@ -118,6 +119,7 @@
     paintState();
     if (tab === 'poems') renderPoemsTab();
     else if (tab === 'site') renderSiteTab();
+    else if (tab === 'json') renderJsonTab();
     else renderBackupTab();
   }
 
@@ -324,6 +326,49 @@
         setDirty(true);
       });
     });
+  }
+
+
+  /* =========================================================
+     تبويب محرّر JSON (متقدم)
+     ========================================================= */
+  function renderJsonTab() {
+    body.innerHTML =
+      '<div class="admin__toolbar">' +
+        '<p class="admin__hint">تحرير متقدم لكل الملف. عدّل ثم «تطبيق على المسودة»، وبعدها «حفظ التغييرات» من الأعلى.</p>' +
+      '</div>' +
+      '<textarea class="editor" id="jsonArea" spellcheck="false" dir="ltr">' + esc(JSON.stringify(draft, null, 2)) + '</textarea>' +
+      '<p class="editor-msg" id="jsonMsg" role="status"></p>' +
+      '<div class="admin__toolbar">' +
+        '<button class="btn btn--gold btn--sm" id="jsonApply" type="button">تطبيق على المسودة</button>' +
+        '<button class="btn btn--line btn--sm" id="jsonDownload" type="button">تنزيل poems.json</button>' +
+        '<button class="btn btn--line btn--sm" id="jsonReload" type="button">إعادة تحميل من المسودة</button>' +
+      '</div>';
+    const msgEl = $('#jsonMsg');
+    $('#jsonArea').addEventListener('input', () => {
+      try { JSON.parse($('#jsonArea').value); msgEl.textContent = 'الصيغة سليمة — لم تُطبَّق بعد'; msgEl.className = 'editor-msg is-ok'; }
+      catch (e) { msgEl.textContent = 'خطأ: ' + e.message; msgEl.className = 'editor-msg is-err'; }
+    });
+    $('#jsonApply').addEventListener('click', () => {
+      try {
+        const j2 = JSON.parse($('#jsonArea').value);
+        if (!j2 || !Array.isArray(j2.poems)) throw new Error('الحقل poems يجب أن يكون مصفوفة');
+        draft = j2; setDirty(true);
+        msgEl.textContent = 'طُبّق على المسودة — اضغط «حفظ التغييرات» بالأعلى'; msgEl.className = 'editor-msg is-ok';
+        window.Athar.toast('طُبّق JSON على المسودة');
+      } catch (e) { msgEl.textContent = 'خطأ: ' + e.message; msgEl.className = 'editor-msg is-err'; }
+    });
+    $('#jsonDownload').addEventListener('click', () => {
+      let text = $('#jsonArea').value;
+      try { text = JSON.stringify(JSON.parse(text), null, 2); } catch (e) {}
+      const blob = new Blob([text], { type: 'application/json;charset=utf-8' });
+      const el = document.createElement('a');
+      el.href = URL.createObjectURL(blob); el.download = 'poems.json';
+      document.body.appendChild(el); el.click(); el.remove();
+      setTimeout(() => URL.revokeObjectURL(el.href), 1500);
+      window.Athar.toast('نُزّل poems.json');
+    });
+    $('#jsonReload').addEventListener('click', () => { renderJsonTab(); window.Athar.toast('أُعيد تحميل المحتوى من المسودة'); });
   }
 
   /* =========================================================

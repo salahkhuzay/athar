@@ -433,7 +433,6 @@
     if (e.key === 'Escape') {
       nav.classList.remove('is-open'); navToggle.setAttribute('aria-expanded', 'false');
       if (!reader.hidden) closeReader();
-      if (!$('#editorModal').hidden) closeModal();
     }
     if (typing) return;
     if (e.key === '/') { e.preventDefault(); $('#searchInput').focus(); }
@@ -494,61 +493,6 @@
         '</section>').join('');
   }
   $('#printBtn').addEventListener('click', () => { renderPrintArea(); setTimeout(() => window.print(), 120); });
-
-  /* ---------- محرّر البيانات ---------- */
-  const modal = $('#editorModal'), area = $('#editorArea'), msg = $('#editorMsg');
-  function openModal() {
-    area.value = state.raw || '{}';
-    msg.textContent = ''; msg.className = 'editor-msg';
-    modal.hidden = false; document.body.style.overflow = 'hidden';
-    setTimeout(() => area.focus(), 60);
-  }
-  function closeModal() { modal.hidden = true; document.body.style.overflow = ''; }
-  $('#openEditor').addEventListener('click', openModal);
-  modal.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) closeModal(); });
-
-  $('#editorApply').addEventListener('click', () => {
-    try {
-      const json = JSON.parse(area.value);
-      if (!json || !Array.isArray(json.poems)) throw new Error('الحقل poems يجب أن يكون مصفوفة');
-      store.set('athar-data-override', JSON.stringify(json));
-      state.data = normalize(json); state.raw = JSON.stringify(json, null, 2);
-      renderAll();
-      msg.textContent = 'تم التطبيق — ' + state.data.poems.length + ' قصيدة (محفوظة في متصفحك).';
-      msg.className = 'editor-msg is-ok'; toast('تم تحديث البيانات');
-      setTimeout(closeModal, 650);
-    } catch (err) { msg.textContent = 'خطأ في الصيغة: ' + err.message; msg.className = 'editor-msg is-err'; }
-  });
-
-  $('#editorReset').addEventListener('click', async () => {
-    store.del('athar-data-override');
-    const res = await loadData();
-    if (res.json) {
-      state.data = normalize(res.json); state.raw = res.raw;
-      area.value = res.raw; renderAll();
-      msg.textContent = 'استُعيد الملف الأصلي.'; msg.className = 'editor-msg is-ok'; toast('تمت الاستعادة');
-    }
-  });
-
-  $('#editorDownload').addEventListener('click', () => {
-    let text = area.value;
-    try { text = JSON.stringify(JSON.parse(area.value), null, 2); } catch (e) {}
-    const blob = new Blob([text], { type: 'application/json;charset=utf-8' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob); a.download = 'poems.json';
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1500);
-    toast('نُزّل الملف poems.json');
-  });
-
-  area.addEventListener('keydown', (e) => {
-    if (e.key === 'Tab') {
-      e.preventDefault();
-      const s = area.selectionStart, en = area.selectionEnd;
-      area.value = area.value.slice(0, s) + '  ' + area.value.slice(en);
-      area.selectionStart = area.selectionEnd = s + 2;
-    }
-  });
 
   /* ---------- رابط مباشر لقصيدة ---------- */
   function focusHash() {
