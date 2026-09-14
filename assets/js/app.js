@@ -542,6 +542,26 @@
         note.innerHTML = 'تُعرض <b>نسخة البيانات المضمّنة</b> لأن المتصفح منع جلب <code>data/poems.json</code> (فتح الملف مباشرة). عند النشر يُقرأ الملف تلقائياً.';
       }
     }
+    if (res.source === 'حفظ محلي') {
+      (async () => {
+        try {
+          const r = await fetch('./data/poems.json?v=' + Date.now(), { cache: 'no-store' });
+          if (!r.ok) return;
+          const pub = await r.json();
+          if (!pub || !Array.isArray(pub.poems)) return;
+          if (JSON.stringify(pub) === JSON.stringify(window.Athar.getJSON())) return;
+          const bar = document.createElement('div');
+          bar.className = 'localbar'; bar.setAttribute('role', 'status');
+          bar.innerHTML = '<p>هذه <b>نسخة محلية</b> محفوظة على جهازك فقط (' + state.data.poems.length + ' قصيدة) — والمنشور للجميع الآن: <b>' + pub.poems.length + ' قصيدة</b>.</p>' +
+            '<button type="button" class="localbar__btn" id="localbarSync">عرض النسخة المنشورة</button>';
+          document.body.prepend(bar);
+          bar.querySelector('#localbarSync').addEventListener('click', async () => {
+            await window.Athar.clearOverride();
+            location.reload();
+          });
+        } catch (e) {}
+      })();
+    }
     renderAll();
     observeReveals(document);
     onScroll();

@@ -640,3 +640,9 @@ a { color: inherit; }
   .admin__foot { padding: .7rem .9rem; }
   .admin-status { flex-basis: 100%; order: 3; text-align: center; }
 }
+
+/* شريط تنبيه: نسخة محلية مختلفة عن المنشور */
+.localbar{position:sticky;top:0;z-index:120;display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between;padding:10px 18px;background:#c29451;color:#140d06;font-family:'Tajawal',system-ui,sans-serif;font-size:14px;box-shadow:0 4px 18px rgba(0,0,0,.35)}
+.localbar p{margin:0}
+.localbar__btn{background:#140d06;color:#f1e8d6;border:0;border-radius:999px;padding:8px 18px;font:inherit;cursor:pointer;white-space:nowrap}
+.localbar__btn:hover{background:#000}
