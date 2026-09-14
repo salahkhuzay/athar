@@ -599,3 +599,44 @@ a { color: inherit; }
   .verse-row__acts { grid-column: 3; grid-row: 1 / span 2; flex-direction: column; }
   .admin__head { flex-wrap: wrap; }
 }
+
+/* =========================================================
+   لوحة التحكم — نسخة موسّعة (شريط حفظ، مجموعات، معاينة حية)
+   ========================================================= */
+.admin__headtext { min-width: 0; }
+.admin__foot {
+  display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
+  padding: .8rem 1.2rem; border-block-start: 1px solid var(--line-soft);
+  background: var(--night-3);
+}
+.admin-status { flex: 1 1 auto; font-size: .76rem; color: var(--ink-faint); }
+.admin__tabs { gap: .2rem; }
+.admin__tab { display: grid; gap: .05rem; text-align: center; padding: .55rem .9rem; }
+.admin__tab small { font-size: .64rem; color: var(--ink-faint); font-weight: 400; }
+.admin__tab.is-active small { color: var(--gold); }
+.admin__body.fade { animation: adminFade .28s var(--ease); }
+@keyframes adminFade { from { opacity: 0; transform: translateY(8px); } }
+
+.admin-search { max-width: 320px; }
+.admin__toolbaracts { display: flex; gap: .4rem; }
+
+.fieldset {
+  border: 1px solid var(--line-soft); border-radius: 12px;
+  padding: 1rem 1rem 1.1rem; margin: 0 0 1rem; min-width: 0;
+}
+.fieldset__legend { font-family: var(--font-poem); color: var(--gold-bright); font-size: 1.02rem; padding-inline: .45rem; }
+.field__hint { font-size: .68rem; color: var(--ink-faint); line-height: 1.6; }
+.check { margin-block-start: .4rem; }
+
+.live-preview { background: var(--night-3); border: 1px dashed var(--line); border-radius: 12px; padding: .9rem 1rem; }
+.lp-title { margin: 0; font-family: var(--font-call); color: var(--paper); font-size: 1.15rem; }
+.lp-mood { margin: .1rem 0 0; font-size: .78rem; color: var(--ink-faint); font-style: italic; }
+.lp-verse { margin: .35rem 0 0; font-family: var(--font-poem); color: var(--ink-dim); text-align: center; line-height: 2; }
+.lp-sep { color: var(--gold); font-size: .6rem; vertical-align: middle; padding-inline: .4rem; }
+.lp-more { margin: .3rem 0 0; text-align: center; font-size: .74rem; color: var(--ink-faint); }
+
+@media (max-width: 640px) {
+  .admin__tab small { display: none; }
+  .admin__foot { padding: .7rem .9rem; }
+  .admin-status { flex-basis: 100%; order: 3; text-align: center; }
+}

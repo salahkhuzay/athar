@@ -517,7 +517,14 @@
       if (res.json) { state.data = normalize(res.json); state.raw = res.raw; renderAll(); return true; }
       return false;
     },
-    toast
+    toast,
+    previewPoem: (p) => {
+      state.reader.list = [p]; state.reader.index = 0;
+      paintReader();
+      reader.hidden = false;
+      document.body.style.overflow = 'hidden';
+      $('.reader__body').scrollTop = 0;
+    }
   };
 
   /* ---------- الإقلاع ---------- */

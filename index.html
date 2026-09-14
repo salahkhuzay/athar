@@ -8,6 +8,8 @@
 <meta name="author" content="صلاح الدين الخزاعي">
 <meta name="theme-color" content="#0f0b07">
 <link rel="canonical" href="./">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta http-equiv="Pragma" content="no-cache">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="أَثَر">
@@ -215,30 +217,6 @@
   </article>
 </div>
 
-  <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="editorTitle">
-    <header class="modal__head">
-      <h3 id="editorTitle">محرّر البيانات</h3>
-      <button class="icon-btn" type="button" data-close aria-label="إغلاق">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      </button>
-    </header>
-    <div class="modal__body">
-      <p class="hint">
-        عدّل محتوى <code>data/poems.json</code> هنا للمعاينة الفورية. تُحفظ التغييرات في متصفحك،
-        ويمكنك تنزيل الملف ليحلّ مكان الأصلي عند النشر.
-      </p>
-      <label class="sr-only" for="editorArea">محتوى JSON</label>
-      <textarea id="editorArea" class="editor" spellcheck="false" dir="ltr"></textarea>
-      <p class="editor-msg" id="editorMsg" role="status"></p>
-    </div>
-    <footer class="modal__foot">
-      <button class="btn btn--line btn--sm" id="editorReset" type="button">استعادة الأصلي</button>
-      <div class="spacer"></div>
-      <button class="btn btn--line btn--sm" id="editorDownload" type="button">تنزيل poems.json</button>
-      <button class="btn btn--gold btn--sm" id="editorApply" type="button">تطبيق وحفظ</button>
-    </footer>
-  </div>
-</div>
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 <div class="srcnote wrap" id="srcNote" hidden></div>
