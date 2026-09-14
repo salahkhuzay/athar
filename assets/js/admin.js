@@ -48,7 +48,7 @@
     '<form class="admin-gate__box" id="gateForm">' +
       '<p class="admin-gate__logo">أَثَر</p>' +
       '<p class="admin-gate__hint">أدخل رمز الدخول لفتح لوحة التحكم<br>(الافتراضي: <code>athar2026</code>)</p>' +
-      '<input class="admin-gate__input" id="gatePass" type="password" inputmode="numeric" autocomplete="current-password" placeholder="رمز الدخول" dir="ltr">' +
+      '<input class="admin-gate__input" id="gatePass" type="password" inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="current-password" placeholder="رمز الدخول (أحرف وأرقام)" dir="ltr">' +
       '<p class="admin-gate__err" id="gateErr" hidden>رمز غير صحيح</p>' +
       '<button class="btn btn--gold" type="submit">دخول</button>' +
     '</form>' +
