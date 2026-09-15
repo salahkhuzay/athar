@@ -646,3 +646,13 @@ a { color: inherit; }
 .localbar p{margin:0}
 .localbar__btn{background:#140d06;color:#f1e8d6;border:0;border-radius:999px;padding:8px 18px;font:inherit;cursor:pointer;white-space:nowrap}
 .localbar__btn:hover{background:#000}
+
+/* بوابة الدخول: زائر / مستخدم */
+.entrygate{position:fixed;inset:0;z-index:300;background:radial-gradient(1100px 600px at 50% -10%,#1d1409,#0f0b07 62%);display:flex;align-items:center;justify-content:center;padding:20px}
+.entrygate__card{text-align:center;width:100%;max-width:420px;background:rgba(23,16,9,.92);border:1px solid #2b2117;border-radius:22px;padding:36px 26px;box-shadow:0 30px 80px rgba(0,0,0,.55)}
+.entrygate__logo{font:400 56px/1.2 'Aref Ruqaa',serif;color:#e2b977;margin:0}
+.entrygate__sub{color:#a89a7f;margin:6px 0 24px;font-size:15px}
+.entrygate__btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.entrygate__lab{display:block;color:#a89a7f;font-size:13px;margin-bottom:6px}
+.entrygate input{width:100%;background:#0f0b07;border:1px solid #2b2117;color:#ece4d3;border-radius:12px;padding:11px 14px;font:inherit;text-align:center;letter-spacing:2px}
+.entrygate__err{color:#e08787;font-size:13px;margin:8px 0 0}

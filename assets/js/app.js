@@ -518,6 +518,8 @@
       return false;
     },
     toast,
+    sha256,
+    entryMode,
     previewPoem: (p) => {
       state.reader.list = [p]; state.reader.index = 0;
       paintReader();
@@ -526,6 +528,61 @@
       $('.reader__body').scrollTop = 0;
     }
   };
+
+  /* ---------- بوابة الدخول: زائر / مستخدم ---------- */
+  const ENTRY_KEY = 'athar-entry';
+  function sha256(t) {
+    return crypto.subtle.digest('SHA-256', new TextEncoder().encode(t))
+      .then((b) => Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, '0')).join(''));
+  }
+  function entryMode() { return store.get(ENTRY_KEY) || ''; }
+  function applyEntry() {
+    const m = entryMode();
+    const btn = $('#openAdmin');
+    if (btn) btn.hidden = m !== 'user';
+    if (m === 'user' && location.hash === '#admin' && btn) setTimeout(() => btn.click(), 350);
+  }
+  function showEntryGate() {
+    const g = document.createElement('div');
+    g.className = 'entrygate';
+    g.innerHTML =
+      '<div class="entrygate__card">' +
+        '<h1 class="entrygate__logo">أثَر</h1>' +
+        '<p class="entrygate__sub">ديوان صلاح الدين الخزاعي</p>' +
+        '<div class="entrygate__btns" id="egBtns">' +
+          '<button type="button" class="btn btn--gold" id="egVisitor">دخول كزائر</button>' +
+          '<button type="button" class="btn btn--line" id="egUser">دخول كمستخدم</button>' +
+        '</div>' +
+        '<form id="egForm" hidden>' +
+          '<label class="entrygate__lab" for="egPass">كلمة المرور</label>' +
+          '<input id="egPass" type="password" inputmode="text" autocomplete="current-password" placeholder="••••••">' +
+          '<p class="entrygate__err" id="egErr" hidden>كلمة المرور غير صحيحة</p>' +
+          '<div class="entrygate__btns">' +
+            '<button class="btn btn--gold" type="submit">دخول</button>' +
+            '<button class="btn btn--line" type="button" id="egBack">رجوع</button>' +
+          '</div>' +
+        '</form>' +
+      '</div>';
+    document.body.prepend(g);
+    document.body.style.overflow = 'hidden';
+    const close = (mode) => { store.set(ENTRY_KEY, mode); g.remove(); document.body.style.overflow = ''; applyEntry(); };
+    g.querySelector('#egVisitor').addEventListener('click', () => close('visitor'));
+    g.querySelector('#egUser').addEventListener('click', () => {
+      g.querySelector('#egBtns').hidden = true; g.querySelector('#egForm').hidden = false;
+      setTimeout(() => g.querySelector('#egPass').focus(), 60);
+    });
+    g.querySelector('#egBack').addEventListener('click', () => {
+      g.querySelector('#egForm').hidden = true; g.querySelector('#egBtns').hidden = false;
+    });
+    g.querySelector('#egForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const v = g.querySelector('#egPass').value;
+      const hash = (state.data && state.data.site) ? state.data.site.adminPassHash : '';
+      let ok = false;
+      try { ok = hash ? (await sha256(v)) === hash : v === 'athar2026'; } catch (err) { ok = v === 'athar2026'; }
+      if (ok) close('user'); else g.querySelector('#egErr').hidden = false;
+    });
+  }
 
   /* ---------- الإقلاع ---------- */
   (async function init() {
@@ -563,6 +620,7 @@
       })();
     }
     renderAll();
+    if (!entryMode()) showEntryGate(); else applyEntry();
     observeReveals(document);
     onScroll();
     focusHash();
