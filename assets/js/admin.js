@@ -453,8 +453,6 @@
       setDirty(true); renderBackupTab();
       window.Athar.toast('حُفظت مجزّأة في المسودة — اضغط «حفظ» ثم انشر الملف');
     });
-    $('#bkLogout').addEventListener('click', () => {
-      localStorage.removeItem('athar-entry'); location.reload();
-    });
+    $('#bkLogout').addEventListener('click', () => { location.reload(); });
   }
 })();

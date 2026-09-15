@@ -530,12 +530,12 @@
   };
 
   /* ---------- بوابة الدخول: زائر / مستخدم ---------- */
-  const ENTRY_KEY = 'athar-entry';
+  let currentMode = '';
   function sha256(t) {
     return crypto.subtle.digest('SHA-256', new TextEncoder().encode(t))
       .then((b) => Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, '0')).join(''));
   }
-  function entryMode() { return store.get(ENTRY_KEY) || ''; }
+  function entryMode() { return currentMode; }
   function applyEntry() {
     const m = entryMode();
     const btn = $('#openAdmin');
@@ -565,7 +565,7 @@
       '</div>';
     document.body.prepend(g);
     document.body.style.overflow = 'hidden';
-    const close = (mode) => { store.set(ENTRY_KEY, mode); g.remove(); document.body.style.overflow = ''; applyEntry(); };
+    const close = (mode) => { currentMode = mode; g.remove(); document.body.style.overflow = ''; applyEntry(); };
     g.querySelector('#egVisitor').addEventListener('click', () => close('visitor'));
     g.querySelector('#egUser').addEventListener('click', () => {
       g.querySelector('#egBtns').hidden = true; g.querySelector('#egForm').hidden = false;
@@ -620,7 +620,7 @@
       })();
     }
     renderAll();
-    if (!entryMode()) showEntryGate(); else applyEntry();
+    applyEntry(); showEntryGate();
     observeReveals(document);
     onScroll();
     focusHash();
