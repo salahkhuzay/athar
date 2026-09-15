@@ -7,3 +7,4 @@ node_modules/
 .netlify
 .idea/
 .vscode/
+editor-local.html
