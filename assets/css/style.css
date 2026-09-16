@@ -687,3 +687,29 @@ a { color: inherit; }
 .aubar__prog{flex:1;height:4px;background:var(--line-soft);border-radius:99px;overflow:hidden}
 .aubar__prog i{display:block;height:100%;width:0;background:var(--gold-bright);border-radius:99px}
 .aubar__x{font-size:14px}
+
+/* ========== المشهد الافتتاحي: انبثاق الشعار ========== */
+.brand__img{width:100%;height:100%;object-fit:contain}
+.splash{position:fixed;inset:0;z-index:400;overflow:hidden}
+.splash__curtain{position:absolute;left:0;right:0;height:51%;background:#0b0805;z-index:1;transition:transform .95s cubic-bezier(.76,0,.24,1)}
+.splash__curtain--t{top:0}
+.splash__curtain--b{bottom:0}
+.splash.is-out .splash__curtain--t{transform:translateY(-101%)}
+.splash.is-out .splash__curtain--b{transform:translateY(101%)}
+.splash__stage{position:absolute;inset:0;z-index:2;display:grid;place-items:center}
+.splash.is-out .splash__stage{animation:stageOut .55s ease both}
+.splash__logo{width:min(48vw,300px);animation:splashLogo 1.7s cubic-bezier(.22,1,.36,1) .12s both;filter:drop-shadow(0 0 34px rgba(226,185,119,.35))}
+.splash__ring{position:absolute;width:min(64vw,390px);aspect-ratio:1;border-radius:50%;border:1.6px solid rgba(226,185,119,.5);animation:ringOut 1.6s ease-out .5s both}
+.splash__ring--2{animation-delay:.85s;border-color:rgba(194,148,81,.35)}
+.splash__shimmer{position:absolute;width:min(48vw,300px);aspect-ratio:1;background:linear-gradient(105deg,transparent 42%,rgba(255,240,200,.55) 50%,transparent 58%);background-size:260% 100%;mix-blend-mode:overlay;animation:shimmerSweep 1.15s ease-in-out 1.05s both;pointer-events:none}
+.splash__parts{position:absolute;inset:0}
+.splash__parts i{position:absolute;left:50%;top:50%;width:var(--sz);height:var(--sz);border-radius:50%;background:#e2b977;box-shadow:0 0 9px #e2b977;animation:partFly 1.15s ease-out var(--dl) both}
+.splash__name{position:absolute;bottom:13%;margin:0;color:#a89a7f;letter-spacing:.16em;font-size:13px;animation:brandWord .8s ease 1.2s both}
+@keyframes splashLogo{0%{opacity:0;transform:scale(.45) rotate(-8deg);filter:blur(16px) brightness(2.4)}45%{opacity:1;filter:blur(0) brightness(1.35)}62%{transform:scale(1.07) rotate(1deg)}100%{opacity:1;transform:scale(1);filter:blur(0) brightness(1) drop-shadow(0 0 34px rgba(226,185,119,.35))}}
+@keyframes ringOut{0%{transform:scale(.35);opacity:0}30%{opacity:.9}100%{transform:scale(1.55);opacity:0}}
+@keyframes shimmerSweep{0%{background-position:120% 0;opacity:0}20%{opacity:1}100%{background-position:-140% 0;opacity:0}}
+@keyframes partFly{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(0);opacity:0}}
+@keyframes stageOut{to{opacity:0;transform:scale(1.06)}}
+.entrygate__card{animation:gatePop .7s cubic-bezier(.22,1,.36,1) both}
+@keyframes gatePop{0%{transform:scale(.86) translateY(16px);opacity:0}100%{transform:scale(1) translateY(0);opacity:1}}
+@media (prefers-reduced-motion:reduce){.splash{display:none}}

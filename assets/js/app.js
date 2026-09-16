@@ -627,6 +627,38 @@
     if (btn) btn.hidden = m !== 'user';
     if (m === 'user' && location.hash === '#admin' && btn) setTimeout(() => btn.click(), 350);
   }
+  function showSplash(done) {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { done(); return; }
+    const s = document.createElement('div');
+    s.className = 'splash';
+    let parts = '';
+    for (let i = 0; i < 24; i++) {
+      const ang = (i / 24) * Math.PI * 2, dist = 90 + Math.random() * 140;
+      parts += '<i style="--dx:' + (Math.cos(ang) * dist).toFixed(0) + 'px;--dy:' + (Math.sin(ang) * dist).toFixed(0) + 'px;--dl:' + (0.85 + Math.random() * 0.6).toFixed(2) + 's;--sz:' + (2 + Math.random() * 3).toFixed(1) + 'px"></i>';
+    }
+    s.innerHTML =
+      '<span class="splash__curtain splash__curtain--t"></span>' +
+      '<span class="splash__curtain splash__curtain--b"></span>' +
+      '<div class="splash__stage">' +
+        '<span class="splash__ring splash__ring--1"></span>' +
+        '<span class="splash__ring splash__ring--2"></span>' +
+        '<img class="splash__logo" src="assets/img/logo-athar-512.png" alt="أثَر">' +
+        '<span class="splash__shimmer" aria-hidden="true"></span>' +
+        '<span class="splash__parts" aria-hidden="true">' + parts + '</span>' +
+        '<p class="splash__name">ديوانُ صوتٍ وحبر</p>' +
+      '</div>';
+    document.body.prepend(s);
+    document.body.style.overflow = 'hidden';
+    let ended = false;
+    const finish = () => {
+      if (ended) return; ended = true;
+      s.classList.add('is-out');
+      setTimeout(() => { s.remove(); document.body.style.overflow = ''; done(); }, 980);
+    };
+    s.addEventListener('click', finish);
+    setTimeout(finish, 2650);
+  }
+
   function showEntryGate() {
     const g = document.createElement('div');
     g.className = 'entrygate';
@@ -705,7 +737,7 @@
       })();
     }
     renderAll();
-    applyEntry(); showEntryGate();
+    applyEntry(); showSplash(() => showEntryGate());
     observeReveals(document);
     onScroll();
     focusHash();
