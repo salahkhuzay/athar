@@ -17,6 +17,7 @@
 
   --font-poem: "Amiri", "Traditional Arabic", serif;
   --font-call: "Aref Ruqaa", "Amiri", serif;
+  --font-kufi: "Cairo", "Tajawal", system-ui, sans-serif;
   --font-ui: "Tajawal", system-ui, "Segoe UI", sans-serif;
 
   --wrap: 1120px;
@@ -252,7 +253,7 @@ a { color: inherit; }
 .card:hover::before { opacity: .8; }
 
 .card__top { display: flex; align-items: flex-start; justify-content: space-between; gap: .6rem; }
-.card__title { margin: 0; font-family: var(--font-call); font-size: 1.3rem; line-height: 1.6; color: var(--paper); }
+.card__title { margin: 0; font-family: var(--font-kufi); font-weight: 700; font-size: 1.28rem; line-height: 1.7; color: var(--paper); }
 .card__title button { background: none; border: 0; padding: 0; text-align: start; font: inherit; color: inherit; }
 .card__title button:hover { color: var(--gold-bright); }
 .card__year { flex: none; font-size: .72rem; color: var(--gold); border: 1px solid var(--line); border-radius: 999px; padding: .1rem .6rem; margin-block-start: .35rem; }
@@ -366,7 +367,7 @@ a { color: inherit; }
 .reader__head { display: flex; align-items: flex-start; gap: 1rem; padding: 1.1rem 1.3rem; border-block-end: 1px solid var(--line-soft); }
 .reader__headtext { flex: 1; min-width: 0; }
 .reader__meta { margin: 0; font-size: .74rem; color: var(--gold); }
-.reader__title { margin: .15rem 0 0; font-family: var(--font-call); font-size: clamp(1.3rem, 4.4vw, 1.8rem); color: var(--paper); line-height: 1.6; }
+.reader__title { margin: .15rem 0 0; font-family: var(--font-kufi); font-weight: 700; font-size: clamp(1.25rem, 4.2vw, 1.7rem); color: var(--paper); line-height: 1.7; }
 .reader__mood { margin: .1rem 0 0; font-size: .82rem; color: var(--ink-faint); font-style: italic; }
 .reader__actions { display: flex; gap: .35rem; flex: none; }
 
@@ -512,7 +513,7 @@ a { color: inherit; }
   .modal, .reader, .toast, .empty, .srcnote, .admin, .admin-gate, #poems { display: none !important; }
   body { background: #fff; color: #111; font-size: 12pt; }
   .print-area { display: block; }
-  .print-area h1 { font-family: var(--font-call); font-size: 22pt; text-align: center; margin: 0 0 1.4rem; }
+  .print-area h1 { font-family: var(--font-kufi); font-weight: 800; font-size: 20pt; text-align: center; margin: 0 0 1.4rem; }
   .print-area section { break-inside: avoid-page; margin-block-end: 1.5rem; }
   .print-area h2 { font-family: var(--font-poem); font-size: 15pt; margin: 0 0 .5rem; text-align: center; }
   .print-area h2 span { font-size: .65em; color: #666; font-weight: 400; }
@@ -629,7 +630,7 @@ a { color: inherit; }
 .check { margin-block-start: .4rem; }
 
 .live-preview { background: var(--night-3); border: 1px dashed var(--line); border-radius: 12px; padding: .9rem 1rem; }
-.lp-title { margin: 0; font-family: var(--font-call); color: var(--paper); font-size: 1.15rem; }
+.lp-title { margin: 0; font-family: var(--font-kufi); font-weight: 700; color: var(--paper); font-size: 1.12rem; }
 .lp-mood { margin: .1rem 0 0; font-size: .78rem; color: var(--ink-faint); font-style: italic; }
 .lp-verse { margin: .35rem 0 0; font-family: var(--font-poem); color: var(--ink-dim); text-align: center; line-height: 2; }
 .lp-sep { color: var(--gold); font-size: .6rem; vertical-align: middle; padding-inline: .4rem; }
