@@ -221,6 +221,7 @@
           field('لون القصيدة', '<select class="fin" data-f="accent">' + ['terracotta', 'olive', 'indigo'].map((a) => '<option value="' + a + '"' + (p.accent === a ? ' selected' : '') + '>' + a + '</option>').join('') + '</select>') +
           field('المقتطف', '<textarea class="fin fin--ta" data-f="excerpt" rows="2" placeholder="سطر تعريفي في البطاقة">' + esc(p.excerpt || '') + '</textarea>') +
           field('وسوم (بفاصلة)', '<input class="fin" data-f="tags" value="' + esc((p.tags || []).join('، ')) + '" placeholder="شوق، ليل…">') +
+          field('تسجيل صوتي', '<input class="fin" data-f="audio" value="' + esc(p.audio || '') + '" dir="ltr" placeholder="data/audio/NAME.mp3">', 'ضع تسجيلك في مجلد data/audio بالمستودع واكتب مساره هنا، فتظهر أيقونة الصوت مع القصيدة.') +
         '</div>' +
         '<label class="check"><input type="checkbox" data-f="featured"' + (p.featured ? ' checked' : '') + '> مرشّحة لقسم «قصيدة مختارة» في الصفحة الرئيسية</label>' +
       '</fieldset>' +

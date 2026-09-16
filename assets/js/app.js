@@ -112,6 +112,7 @@
       accent: p.accent || '',
       tags: Array.isArray(p.tags) ? p.tags : [],
       featured: !!p.featured,
+      audio: p.audio || '',
       verses: (p.verses || p.lines || []).map((v) => ({
         sadr: v.sadr ?? v['صدر'] ?? '',
         ajoz: v.ajoz ?? v.ajz ?? v['عجز'] ?? ''
@@ -245,7 +246,10 @@
   const I = {
     star: '<path d="M12 4l2.3 4.9 5.2.7-3.8 3.7.9 5.3L12 16.9 7.4 18.6l.9-5.3L4.5 9.6l5.2-.7z"/>',
     copy: '<rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 5.5A2.5 2.5 0 0 0 12.5 3H6.5A2.5 2.5 0 0 0 4 5.5v6A2.5 2.5 0 0 0 6.5 14"/>',
-    arrow: '<path d="M19 12H5M11 6l-6 6 6 6"/>'
+    arrow: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
+    speaker: '<path d="M4 10v4h3l4 3.5v-11L7 10H4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18 6a8.5 8.5 0 0 1 0 12"/>',
+    pause: '<path d="M9 5v14M15 5v14"/>',
+    play: '<path d="M8 5l11 7-11 7z"/>'
   };
 
   function cardHTML(p) {
@@ -268,6 +272,8 @@
           '<svg viewBox="0 0 24 24" aria-hidden="true">' + I.star + '</svg></button>' +
         '<button class="icon-btn js-copy" type="button" data-id="' + esc(p.id) + '" aria-label="نسخ القصيدة" title="نسخ القصيدة">' +
           '<svg viewBox="0 0 24 24" aria-hidden="true">' + I.copy + '</svg></button>' +
+        (p.audio ? '<button class="icon-btn js-play" type="button" data-id="' + esc(p.id) + '" aria-label="استمع بصوت الشاعر" title="استمع بصوت الشاعر">' +
+          '<svg viewBox="0 0 24 24" aria-hidden="true">' + I.speaker + '</svg></button>' : '') +
       '</div></article>';
   }
 
@@ -293,7 +299,7 @@
   }
 
   function renderAll() {
-    bindStatic(); renderMarquee(); renderFeatured(); renderChips(); renderCards(); renderStats();
+    bindStatic(); renderMarquee(); renderFeatured(); renderChips(); renderCards(); renderStats(); renderAudioLib(); paintPlayButtons();
   }
 
   /* ---------- القارئ ---------- */
@@ -329,6 +335,13 @@
     $('#readerManuscript').setAttribute('aria-pressed', String(state.reader.manuscript));
     $('#readerPrev').disabled = state.reader.index >= state.reader.list.length - 1;
     $('#readerNext').disabled = state.reader.index <= 0;
+    const rp = $('#readerPlay');
+    if (rp) {
+      rp.hidden = !p.audio;
+      const on = p.audio && state.audioId === p.id && AU && !AU.paused;
+      rp.classList.toggle('is-on', !!on);
+      rp.querySelector('svg').innerHTML = on ? I.pause : I.speaker;
+    }
   }
 
   function closeReader() { reader.hidden = true; document.body.style.overflow = ''; }
@@ -344,6 +357,7 @@
   });
   $('#readerCopy').addEventListener('click', () => copyPoem(state.reader.list[state.reader.index].id));
   $('#readerFav').addEventListener('click', () => { toggleFav(state.reader.list[state.reader.index].id); paintReader(); });
+  $('#readerPlay').addEventListener('click', () => { togglePlay(state.reader.list[state.reader.index].id); });
 
   reader.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) closeReader(); });
 
@@ -396,7 +410,78 @@
 
     const copy = e.target.closest('.js-copy');
     if (copy) { copyPoem(copy.getAttribute('data-id')); return; }
+
+    const play = e.target.closest('.js-play');
+    if (play) { togglePlay(play.getAttribute('data-id')); return; }
   });
+
+  /* ---------- الصوت: مكتبة الديوان بصوت الشاعر ---------- */
+  let AU = null;
+  state.audioId = '';
+  function ensureAU() {
+    if (AU) return AU;
+    AU = new Audio();
+    AU.addEventListener('ended', () => { state.audioId = ''; paintPlayButtons(); hideBar(); });
+    AU.addEventListener('timeupdate', paintBar);
+    AU.addEventListener('play', () => { paintPlayButtons(); const b = $('#auPP'); if (b) b.querySelector('svg').innerHTML = I.pause; });
+    AU.addEventListener('pause', () => { paintPlayButtons(); const b = $('#auPP'); if (b) b.querySelector('svg').innerHTML = I.play; });
+    return AU;
+  }
+  function togglePlay(id) {
+    const p = state.data.poems.find((x) => x.id === id);
+    if (!p || !p.audio) { toast('لا تسجيل لهذه القصيدة بعد'); return; }
+    const a = ensureAU();
+    if (state.audioId === id) { if (a.paused) { a.play(); showBar(p); } else a.pause(); return; }
+    a.src = p.audio; state.audioId = id; showBar(p); paintBar();
+    a.play().catch(() => { toast('تعذّر تشغيل الصوت'); hideBar(); state.audioId = ''; paintPlayButtons(); });
+  }
+  function paintPlayButtons() {
+    document.querySelectorAll('.js-play').forEach((b) => {
+      const on = b.getAttribute('data-id') === state.audioId && AU && !AU.paused;
+      b.classList.toggle('is-on', !!on);
+      b.querySelector('svg').innerHTML = on ? I.pause : I.speaker;
+    });
+    const rp = $('#readerPlay');
+    if (rp && !rp.hidden) {
+      const p = state.reader.list[state.reader.index];
+      const on = p && p.audio && state.audioId === p.id && AU && !AU.paused;
+      rp.classList.toggle('is-on', !!on);
+      rp.querySelector('svg').innerHTML = on ? I.pause : I.speaker;
+    }
+  }
+  function barEl() {
+    let b = $('#auBar');
+    if (!b) {
+      b = document.createElement('div'); b.id = 'auBar'; b.className = 'aubar'; b.hidden = true;
+      b.innerHTML = '<button class="aubar__pp" type="button" id="auPP" aria-label="تشغيل/إيقاف"><svg viewBox="0 0 24 24" aria-hidden="true">' + I.pause + '</svg></button>' +
+        '<div class="aubar__meta"><b id="auTitle"></b><span id="auTime"></span></div>' +
+        '<div class="aubar__prog"><i id="auProg"></i></div>' +
+        '<button class="aubar__x" type="button" aria-label="إغلاق المشغّل">✕</button>';
+      document.body.appendChild(b);
+      b.querySelector('.aubar__x').addEventListener('click', () => { if (AU) AU.pause(); state.audioId = ''; hideBar(); paintPlayButtons(); });
+      b.querySelector('#auPP').addEventListener('click', () => { if (!AU) return; if (AU.paused) AU.play(); else AU.pause(); });
+    }
+    return b;
+  }
+  function showBar(p) { const b = barEl(); b.hidden = false; $('#auTitle').textContent = p.title; }
+  function hideBar() { const b = $('#auBar'); if (b) b.hidden = true; }
+  function fmtT(s) { s = Math.round(s || 0); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+  function paintBar() {
+    if (!AU) return;
+    const pr = $('#auProg'); if (pr) pr.style.width = (AU.duration ? (AU.currentTime / AU.duration * 100) : 0) + '%';
+    const t = $('#auTime'); if (t) t.textContent = fmtT(AU.currentTime) + ' / ' + fmtT(AU.duration);
+  }
+  function renderAudioLib() {
+    const sec = $('#audioLib'); if (!sec) return;
+    const list = state.data.poems.filter((p) => p.audio);
+    sec.hidden = list.length === 0;
+    if (!list.length) return;
+    $('#audioList').innerHTML = list.map((p) =>
+      '<div class="audiolib__row">' +
+        '<button class="icon-btn js-play" type="button" data-id="' + esc(p.id) + '" aria-label="تشغيل ' + esc(p.title) + '"><svg viewBox="0 0 24 24" aria-hidden="true">' + I.speaker + '</svg></button>' +
+        '<b>' + esc(p.title) + '</b><span>' + esc(p.category || '') + '</span>' +
+      '</div>').join('');
+  }
 
   /* ---------- البحث ---------- */
   let searchTimer;
