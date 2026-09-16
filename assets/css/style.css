@@ -714,3 +714,8 @@ a { color: inherit; }
 .entrygate__card{animation:gatePop .7s cubic-bezier(.22,1,.36,1) both}
 @keyframes gatePop{0%{transform:scale(.86) translateY(16px);opacity:0}100%{transform:scale(1) translateY(0);opacity:1}}
 @media (prefers-reduced-motion:reduce){.splash{display:none}}
+
+/* رمز QR في التواصل */
+.contact__qr{margin:2rem auto 0;text-align:center}
+.contact__qr img{border-radius:14px;border:1px solid var(--line-soft);background:#f1e8d6;padding:8px;width:132px;height:132px}
+.contact__qr p{margin:.6rem 0 0;color:var(--ink-faint);font-size:13px}
