@@ -249,7 +249,8 @@
     arrow: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
     speaker: '<path d="M4 10v4h3l4 3.5v-11L7 10H4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18 6a8.5 8.5 0 0 1 0 12"/>',
     pause: '<path d="M9 5v14M15 5v14"/>',
-    play: '<path d="M8 5l11 7-11 7z"/>'
+    play: '<path d="M8 5l11 7-11 7z"/>',
+    image: '<rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M4 17l5-4 3 2.5L16 12l4 4"/>'
   };
 
   function cardHTML(p) {
@@ -274,6 +275,8 @@
           '<svg viewBox="0 0 24 24" aria-hidden="true">' + I.copy + '</svg></button>' +
         (p.audio ? '<button class="icon-btn js-play" type="button" data-id="' + esc(p.id) + '" aria-label="استمع بصوت الشاعر" title="استمع بصوت الشاعر">' +
           '<svg viewBox="0 0 24 24" aria-hidden="true">' + I.speaker + '</svg></button>' : '') +
+        '<button class="icon-btn js-card" type="button" data-id="' + esc(p.id) + '" aria-label="بطاقة مشاركة" title="بطاقة مشاركة">' +
+          '<svg viewBox="0 0 24 24" aria-hidden="true">' + I.image + '</svg></button>' +
       '</div></article>';
   }
 
@@ -358,6 +361,7 @@
   $('#readerCopy').addEventListener('click', () => copyPoem(state.reader.list[state.reader.index].id));
   $('#readerFav').addEventListener('click', () => { toggleFav(state.reader.list[state.reader.index].id); paintReader(); });
   $('#readerPlay').addEventListener('click', () => { togglePlay(state.reader.list[state.reader.index].id); });
+  $('#readerCard').addEventListener('click', () => { makeCard(state.reader.list[state.reader.index].id); });
 
   reader.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) closeReader(); });
 
@@ -413,7 +417,71 @@
 
     const play = e.target.closest('.js-play');
     if (play) { togglePlay(play.getAttribute('data-id')); return; }
+
+    const card = e.target.closest('.js-card');
+    if (card) { makeCard(card.getAttribute('data-id')); return; }
   });
+
+  /* ---------- بطاقة المشاركة: صورة جاهزة للنشر ---------- */
+  function loadImg(src) {
+    return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
+  }
+  async function makeCard(id) {
+    const p = state.data.poems.find((x) => x.id === id);
+    if (!p) return;
+    toast('جارٍ رسم البطاقة…');
+    try {
+      await document.fonts.ready;
+      const W = 1080, H = 1350;
+      const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+      const x = cv.getContext('2d');
+      x.fillStyle = '#0f0b07'; x.fillRect(0, 0, W, H);
+      const g = x.createRadialGradient(W / 2, -120, 60, W / 2, 0, 950);
+      g.addColorStop(0, '#26180a'); g.addColorStop(1, 'rgba(15,11,7,0)');
+      x.fillStyle = g; x.fillRect(0, 0, W, H);
+      x.strokeStyle = 'rgba(194,148,81,.85)'; x.lineWidth = 3; x.strokeRect(36, 36, W - 72, H - 72);
+      x.strokeStyle = 'rgba(194,148,81,.3)'; x.lineWidth = 1; x.strokeRect(54, 54, W - 108, H - 108);
+      const logo = await loadImg('assets/img/logo-athar-512.png');
+      const ls = 250; x.drawImage(logo, (W - ls) / 2, 92, ls, ls);
+      x.textAlign = 'center'; x.direction = 'rtl';
+      x.fillStyle = '#e2b977'; x.font = '700 62px Cairo, Tajawal, sans-serif';
+      x.fillText(p.title, W / 2, 452);
+      x.fillStyle = '#a89a7f'; x.font = '400 32px Tajawal, sans-serif';
+      x.fillText((state.data.site && state.data.site.poet) || 'صلاح الدين الخزاعي', W / 2, 512);
+      x.strokeStyle = 'rgba(194,148,81,.5)'; x.beginPath(); x.moveTo(W / 2 - 130, 552); x.lineTo(W / 2 + 130, 552); x.stroke();
+      x.fillStyle = '#ece4d3'; x.font = '400 42px Amiri, serif';
+      let y = 640;
+      const wrap = (t) => {
+        const words = t.split(' '); const lines = []; let cur = '';
+        words.forEach((w) => {
+          const test = cur ? cur + ' ' + w : w;
+          if (x.measureText(test).width > W - 220) { if (cur) lines.push(cur); cur = w; } else cur = test;
+        });
+        if (cur) lines.push(cur);
+        return lines;
+      };
+      p.verses.slice(0, 3).forEach((v) => {
+        wrap(v.ajoz ? v.sadr + '  ◆  ' + v.ajoz : v.sadr).forEach((ln) => { x.fillText(ln, W / 2, y); y += 62; });
+        y += 22;
+      });
+      x.fillStyle = '#6e6152'; x.font = '400 26px Tajawal, sans-serif';
+      x.fillText('ديوانُ صوتٍ وحبر', W / 2, H - 168);
+      x.fillStyle = '#c29451'; x.font = '600 30px Cairo, sans-serif';
+      x.fillText('salahkhuzay.github.io/athar', W / 2, H - 116);
+      cv.toBlob(async (b) => {
+        if (!b) { toast('تعذّر رسم البطاقة'); return; }
+        const f = new File([b], 'athar-' + p.id + '.png', { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [f] })) {
+          try { await navigator.share({ files: [f], title: p.title, text: p.title + ' — صلاح الدين الخزاعي' }); toast('شُرِكَت البطاقة'); return; } catch (e) {}
+        }
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(b); a.download = 'athar-' + p.id + '.png';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+        toast('نُزّلت البطاقة — انشرها حيث شئت');
+      }, 'image/png');
+    } catch (e) { toast('تعذّر رسم البطاقة'); }
+  }
 
   /* ---------- الصوت: مكتبة الديوان بصوت الشاعر ---------- */
   let AU = null;
