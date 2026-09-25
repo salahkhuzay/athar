@@ -741,7 +741,9 @@
         '<form id="egForm" hidden>' +
           '<label class="entrygate__lab" for="egPass">كلمة المرور</label>' +
           '<input id="egPass" type="password" inputmode="text" autocomplete="current-password" placeholder="••••••">' +
+          '<label class="entrygate__eye"><input type="checkbox" id="egShow"> إظهار الكلمة</label>' +
           '<p class="entrygate__err" id="egErr" hidden>كلمة المرور غير صحيحة</p>' +
+          '<p class="entrygate__hint" id="egHint" hidden>إن كنت واثقاً منها: تأكّد من غياب المسافات، أو جرّب تبويباً خاصاً — نسخةٌ محلية قديمة على جهازك قد تُتوقّع كلمةً أخرى. ضبطُ كلمةٍ منشورة موحّدة من اللوحة → «الحفظ والنشر» ينهي ذلك نهائياً.</p>' +
           '<div class="entrygate__btns">' +
             '<button class="btn btn--gold" type="submit">دخول</button>' +
             '<button class="btn btn--line" type="button" id="egBack">رجوع</button>' +
@@ -759,13 +761,25 @@
     g.querySelector('#egBack').addEventListener('click', () => {
       g.querySelector('#egForm').hidden = true; g.querySelector('#egBtns').hidden = false;
     });
+    g.querySelector('#egShow').addEventListener('change', (e) => {
+      g.querySelector('#egPass').type = e.target.checked ? 'text' : 'password';
+      g.querySelector('#egPass').focus();
+    });
     g.querySelector('#egForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const v = g.querySelector('#egPass').value;
-      const hash = (state.data && state.data.site) ? state.data.site.adminPassHash : '';
+      const v = g.querySelector('#egPass').value.trim();
+      let hash = (state.data && state.data.site && state.data.site.adminPassHash) || '';
+      try {
+        const r = await fetch('./data/poems.json?v=' + Date.now(), { cache: 'no-store' });
+        if (r.ok) { const pub = await r.json(); if (pub && pub.site && pub.site.adminPassHash) hash = pub.site.adminPassHash; }
+      } catch (err) {}
+      const legacy = localStorage.getItem('athar-admin-pass') || '';
       let ok = false;
-      try { ok = hash ? (await sha256(v)) === hash : v === 'athar2026'; } catch (err) { ok = v === 'athar2026'; }
-      if (ok) close('user'); else g.querySelector('#egErr').hidden = false;
+      if (hash) { try { ok = (await sha256(v)) === hash; } catch (err) { ok = false; } }
+      else ok = v === 'athar2026';
+      if (!ok && legacy && v === legacy) ok = true;
+      if (ok) close('user');
+      else { g.querySelector('#egErr').hidden = false; g.querySelector('#egHint').hidden = false; }
     });
   }
 
