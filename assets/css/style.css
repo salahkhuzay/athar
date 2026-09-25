@@ -723,3 +723,15 @@ a { color: inherit; }
 .entrygate__eye{display:flex;gap:6px;align-items:center;justify-content:center;color:#a89a7f;font-size:12px;margin-top:8px;cursor:pointer}
 .entrygate__eye input{width:auto}
 .entrygate__hint{color:#8a7a5f;font-size:11.5px;line-height:1.7;margin:8px 0 0}
+
+/* تبويبات لوحة التحكم: أعرض وأوضح */
+.admin__tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;padding:.7rem .9rem 0;overflow:visible}
+.admin__tab{padding:.85rem .6rem;font-size:1rem;font-weight:600;white-space:normal;border-radius:12px 12px 0 0}
+.admin__tab span{display:block}
+.admin__tab small{display:block;font-size:.72rem;line-height:1.5}
+@media (max-width:700px){
+  .admin__tabs{grid-template-columns:1fr 1fr;gap:.45rem;padding:.7rem .7rem 0}
+  .admin__tab{padding:.95rem .5rem;font-size:1.05rem;border-radius:12px;border:1px solid var(--line-soft)}
+  .admin__tab.is-active{border-color:var(--gold)}
+  .admin__tab small{display:block;font-size:.74rem}
+}
