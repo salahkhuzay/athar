@@ -467,7 +467,7 @@
       x.fillStyle = '#6e6152'; x.font = '400 26px Tajawal, sans-serif';
       x.fillText('ديوانُ صوتٍ وحبر', W / 2, H - 168);
       x.fillStyle = '#c29451'; x.font = '600 30px Cairo, sans-serif';
-      x.fillText('salahkhuzay.github.io/athar', W / 2, H - 116);
+      x.fillText('athar-poetry.com', W / 2, H - 116);
       cv.toBlob(async (b) => {
         if (!b) { toast('تعذّر رسم البطاقة'); return; }
         const f = new File([b], 'athar-' + p.id + '.png', { type: 'image/png' });

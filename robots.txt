@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://salahkhuzay.github.io/athar/sitemap.xml
+Sitemap: https://athar-poetry.com/sitemap.xml
