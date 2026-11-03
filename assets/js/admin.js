@@ -312,10 +312,10 @@
     const poemsOpts = (draft.poems || []).map((p) => '<option value="' + esc(p.id) + '"' + (s.featuredId === p.id ? ' selected' : '') + '>' + esc(p.title) + '</option>').join('');
     body.innerHTML =
       '<fieldset class="fieldset"><legend class="fieldset__legend">الافتتاحية</legend><div class="form-grid">' +
-        field('بيت الواجهة — الصدر', '<input class="fin" data-s="heroQuote.sadr" value="' + esc(s.heroQuote.sadr || '') + '">', 'البيت الكبير تحت شعار أَثَر.') +
+        field('بيت الواجهة — الصدر', '<input class="fin" data-s="heroQuote.sadr" value="' + esc(s.heroQuote.sadr || '') + '">', 'اتركه فارغاً ليتبدّل تلقائياً كل أسبوع، أو اكتب بيتاً لتثبيته.') +
         field('بيت الواجهة — العجز', '<input class="fin" data-s="heroQuote.ajoz" value="' + esc(s.heroQuote.ajoz) + '">') +
         field('مسار صورة الواجهة', '<input class="fin" data-s="heroImage" value="' + esc(s.heroImage || '') + '" dir="ltr" placeholder="assets/img/hero-night.jpg">') +
-        field('القصيدة المختارة', '<select class="fin" data-s="featuredId">' + poemsOpts + '</select>', 'تظهر أبياتها في قسم «قصيدة مختارة».') +
+        field('القصيدة المختارة', '<select class="fin" data-s="featuredId"><option value=""' + (!s.featuredId ? ' selected' : '') + '>تلقائي — تتبدّل كل أسبوع</option>' + poemsOpts + '</select>', 'اتركها «تلقائي» لتدور على الديوان أسبوعياً، أو اختر قصيدة لتثبيتها.') +
       '</div></fieldset>' +
       '<fieldset class="fieldset"><legend class="fieldset__legend">الشاعر والسيرة</legend><div class="form-grid">' +
         field('اسم الشاعر', '<input class="fin" data-s="poet" value="' + esc(s.poet || '') + '">') +

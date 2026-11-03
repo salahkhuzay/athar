@@ -134,7 +134,7 @@
     });
     document.title = 'أثر | ديوان الشاعر ' + poet;
 
-    const hq = s.heroQuote;
+    const hq = heroQuote();
     const hqEl = $('#heroQuote');
     if (hqEl) {
       hqEl.innerHTML = hq
@@ -196,11 +196,34 @@
   }
 
   /* ---------- قصيدة مختارة ---------- */
+  /* الدورة الأسبوعية: رقم الأسبوع منذ الاثنين 2026-01-05 بتوقيت دمشق (UTC+3).
+     القصيدة المختارة تدور على الديوان بترتيبه (ترتيب الإضافة)، فإضافة قصيدة
+     جديدة تُلحقها بآخر الدورة فقط ولا تُحرّك ما هو معروض. */
+  function weekIndex() {
+    const DAMASCUS = 3 * 3600 * 1000;
+    const start = Date.UTC(2026, 0, 5) - DAMASCUS;
+    const w = Math.floor((Date.now() - start) / (7 * 24 * 3600 * 1000));
+    return w < 0 ? 0 : w;
+  }
+
   function featuredPoem() {
     const s = state.data.site;
-    return state.data.poems.find((p) => p.id === s.featuredId)
-      || state.data.poems.find((p) => p.featured)
-      || state.data.poems[0];
+    const poems = state.data.poems;
+    if (!poems.length) return null;
+    const pinned = (s.featuredId && poems.find((p) => p.id === s.featuredId)) || poems.find((p) => p.featured);
+    if (pinned) return pinned;
+    return poems[weekIndex() % poems.length];
+  }
+
+  /* بيت الواجهة: من كل أبيات الديوان بترتيبها، بخطوة 7 لتباعده عن القصيدة المختارة.
+     site.heroQuote (إن وُجد بنصّ) يثبّته يدوياً. */
+  function heroQuote() {
+    const s = state.data.site;
+    if (s.heroQuote && s.heroQuote.sadr) return s.heroQuote;
+    const all = [];
+    state.data.poems.forEach((p) => p.verses.forEach((v) => { if (v.sadr && v.ajoz) all.push(v); }));
+    if (!all.length) return null;
+    return all[(weekIndex() * 7) % all.length];
   }
 
   function renderFeatured() {
