@@ -149,8 +149,8 @@ a { color: inherit; }
 .hero__quote {
   margin: 1.4rem 0 0; padding: 1.1rem 1.6rem; max-width: 46ch;
   border-block: 1px solid var(--line);
-  font-family: var(--font-poem); font-size: clamp(1.05rem, 3.4vw, 1.4rem); line-height: 2.2;
-  color: var(--ink);
+  font-family: var(--font-poem); font-weight: 700; font-size: clamp(1.15rem, 3.8vw, 1.55rem); line-height: 2.2;
+  color: var(--paper);
 }
 .hero__quote p { margin: 0; }
 .hero__quote .qmark { color: var(--gold); }
@@ -204,7 +204,7 @@ a { color: inherit; }
   display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr);
   align-items: center; gap: 1rem; padding: .45rem 0;
 }
-.fverse p { margin: 0; font-family: var(--font-poem); font-size: clamp(1.05rem, 3.4vw, 1.35rem); line-height: 2.1; color: var(--ink); text-align: center; }
+.fverse p { margin: 0; font-family: var(--font-poem); font-weight: 700; font-size: clamp(1.15rem, 3.8vw, 1.5rem); line-height: 2.1; color: var(--paper); text-align: center; }
 .fverse .sep { inline-size: 5px; block-size: 5px; rotate: 45deg; background: var(--gold); opacity: .6; border-radius: 1px; }
 .featured__by { margin: 1rem 0 0; color: var(--ink-faint); font-size: .85rem; }
 
@@ -259,7 +259,7 @@ a { color: inherit; }
 .card__year { flex: none; font-size: .72rem; color: var(--gold); border: 1px solid var(--line); border-radius: 999px; padding: .1rem .6rem; margin-block-start: .35rem; }
 .card__mood { margin: -.1rem 0 0; font-size: .8rem; color: var(--ink-faint); font-style: italic; }
 .card__preview { margin-block-start: .5rem; display: grid; gap: .1rem; }
-.cverse { margin: 0; font-family: var(--font-poem); font-size: 1.02rem; line-height: 2; color: var(--ink-dim); text-align: center; }
+.cverse { margin: 0; font-family: var(--font-poem); font-weight: 700; font-size: 1.12rem; line-height: 2; color: var(--ink); text-align: center; }
 .cverse .sep { color: var(--gold); opacity: .7; font-size: .6rem; vertical-align: middle; padding-inline: .45rem; }
 .card__excerpt { margin: .2rem 0 0; font-size: .82rem; color: var(--ink-faint); line-height: 1.9; }
 .card__foot { margin-block-start: auto; padding-block-start: .9rem; border-block-start: 1px solid var(--line-soft); display: flex; align-items: center; gap: .4rem; }
@@ -379,7 +379,7 @@ a { color: inherit; }
   border-block-end: 1px dashed var(--line-soft);
 }
 .rverse:last-child { border-block-end: 0; }
-.rverse p { margin: 0; font-family: var(--font-poem); font-size: clamp(1.05rem, 3.2vw, 1.3rem); line-height: 2.2; text-align: center; color: var(--ink); }
+.rverse p { margin: 0; font-family: var(--font-poem); font-weight: 700; font-size: clamp(1.2rem, 3.8vw, 1.5rem); line-height: 2.2; text-align: center; color: var(--paper); }
 .rverse .sep { inline-size: 5px; block-size: 5px; rotate: 45deg; background: var(--gold); opacity: .5; border-radius: 1px; }
 .reader__end { margin: 1.4rem 0 0; text-align: center; font-family: var(--font-poem); font-style: italic; color: var(--ink-faint); }
 .reader__end::before, .reader__end::after { content: " ✦ "; color: var(--gold); font-style: normal; font-size: .7rem; }
