@@ -277,8 +277,32 @@ a { color: inherit; }
 }
 .card__open svg { inline-size: 15px; block-size: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: translate .25s var(--ease); }
 .card__open:hover svg { translate: -3px 0; }
+.card__permalink { color: var(--ink-faint); font-size: .76rem; text-decoration: none; white-space: nowrap; }
+.card__permalink:hover { color: var(--gold-bright); text-decoration: underline; text-underline-offset: 3px; }
 .card__foot .icon-btn { inline-size: 32px; block-size: 32px; margin-inline-start: .15rem; border-color: transparent; }
 .card__foot .spacer { flex: 1; }
+
+/* ---------- صفحات القصائد القابلة للفهرسة ---------- */
+.poem-page__main { min-height: 100svh; padding-block: 2rem 4rem; background: radial-gradient(80% 45% at 50% 0%, rgba(194,148,81,.12), transparent 75%), var(--night); }
+.poem-page__nav { display: flex; align-items: center; gap: .55rem; margin-block-end: 1.4rem; color: var(--ink-faint); font-size: .86rem; }
+.poem-page__nav a { color: var(--gold-bright); text-decoration: none; }
+.poem-page__nav a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.poem-page__article { max-width: 900px; margin-inline: auto; padding: clamp(1.2rem, 4vw, 2.8rem); background: linear-gradient(160deg, var(--night-3), var(--night-2)); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 30px 70px rgba(0,0,0,.35); }
+.poem-page__head { text-align: center; }
+.poem-page__head h1 { margin: .3rem 0 0; font-family: var(--font-call); font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.5; color: var(--paper); }
+.poem-page__meta { margin: .35rem 0 0; color: var(--gold); font-size: .82rem; }
+.poem-page__mood { margin: .25rem 0 0; color: var(--ink-faint); font-style: italic; }
+.poem-page__excerpt { max-width: 58ch; margin: 1rem auto 0; color: var(--ink-dim); line-height: 2; }
+.poem-page__tags { display: flex; flex-wrap: wrap; justify-content: center; gap: .45rem; margin: 1rem 0 0; padding: 0; list-style: none; }
+.poem-page__tags li { padding: .15rem .65rem; border: 1px solid var(--line); border-radius: 999px; color: var(--ink-dim); font-size: .76rem; }
+.poem-page__verses { display: grid; gap: .1rem; margin-block: 2.2rem; }
+.poem-page__verse { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); align-items: center; gap: clamp(.6rem, 2vw, 1.4rem); padding: .7rem .2rem; border-block-end: 1px dashed var(--line-soft); }
+.poem-page__verse:last-child { border-block-end: 0; }
+.poem-page__verse p { margin: 0; color: var(--paper); font-family: var(--font-poem); font-size: clamp(1.25rem, 3.5vw, 1.65rem); font-weight: 700; line-height: 2.15; text-align: center; }
+.poem-page__verse span { color: var(--gold); font-size: .65rem; }
+.poem-page__foot { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block-start: 1.2rem; border-block-start: 1px solid var(--line-soft); color: var(--ink-faint); font-size: .84rem; }
+.poem-page__foot p { margin: 0; }
+.poem-page__foot a:not(.btn) { color: var(--gold-bright); }
 
 /* ---------- فاصل ---------- */
 .divider { display: flex; align-items: center; gap: 1.1rem; padding-block: 1.4rem; width: min(100% - 2.4rem, 720px); margin-inline: auto; }
@@ -511,6 +535,10 @@ a { color: inherit; }
   .fverse .sep, .rverse .sep { display: none; }
   .fverse p, .rverse p { text-align: center; line-height: 2; }
   .fverse p:last-of-type, .rverse p:last-of-type { color: var(--ink-dim); }
+  .poem-page__verse { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .poem-page__verse span { display: none; }
+  .poem-page__verse p:last-child { color: var(--ink-dim); }
+  .poem-page__foot { align-items: stretch; flex-direction: column; text-align: center; }
   .reader__head { flex-direction: column-reverse; gap: .6rem; }
   .reader__actions { align-self: flex-end; }
   .reader__foot { justify-content: center; }

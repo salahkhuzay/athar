@@ -298,6 +298,7 @@
       '<div class="card__foot">' +
         '<button class="card__open js-open" type="button" data-id="' + esc(p.id) + '" aria-label="اقرأ قصيدة ' + esc(p.title) + ' كاملة">' +
           '<span>اقرأ القصيدة كاملة</span><svg viewBox="0 0 24 24" aria-hidden="true">' + I.arrow + '</svg></button>' +
+        '<a class="card__permalink" href="' + esc(poemPath(p)) + '">صفحة القصيدة</a>' +
         '<span class="spacer"></span>' +
         '<button class="icon-btn js-fav' + (fav ? ' is-on' : '') + '" type="button" data-id="' + esc(p.id) + '" aria-pressed="' + fav + '" aria-label="حفظ القصيدة" title="حفظ">' +
           '<svg viewBox="0 0 24 24" aria-hidden="true">' + I.star + '</svg></button>' +
@@ -410,10 +411,14 @@
 
   function findPoem(id) { return state.data.poems.find((p) => p.id === id); }
 
+  function poemPath(p) {
+    return 'poems/' + encodeURIComponent(p.id) + '/';
+  }
+
   function poemAsText(p) {
     return [p.title, '']
       .concat(p.verses.map((v) => (v.ajoz ? v.sadr + '  ***  ' + v.ajoz : v.sadr)))
-      .concat(['', '— ' + (state.data.site.poet || ''), location.origin + location.pathname + '#p-' + p.id])
+      .concat(['', '— ' + (state.data.site.poet || ''), new URL(poemPath(p), location.href).href])
       .join('\n');
   }
 

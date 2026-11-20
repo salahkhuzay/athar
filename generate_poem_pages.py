@@ -1,0 +1,156 @@
+#!/usr/bin/env python3
+"""Generate crawler-visible, shareable HTML pages for every poem."""
+from __future__ import annotations
+
+import html
+import json
+import re
+import shutil
+from datetime import date
+from pathlib import Path
+from urllib.parse import quote
+
+ROOT = Path(__file__).resolve().parent
+DATA_PATH = ROOT / "data" / "poems.json"
+OUT_DIR = ROOT / "poems"
+BASE_URL = "https://athar-poetry.com"
+
+
+def slug_for(poem: dict) -> str:
+    raw = str(poem.get("id") or poem.get("title") or "poem").strip()
+    slug = re.sub(r"[^\w\-\u0600-\u06ff]+", "-", raw, flags=re.UNICODE).strip("-")
+    return slug or "poem"
+
+
+def page_url(slug: str) -> str:
+    return f"{BASE_URL}/poems/{quote(slug, safe='')}/"
+
+
+def esc(value: object) -> str:
+    return html.escape(str(value or ""), quote=True)
+
+
+def jsonld(poem: dict, url: str, poet: str) -> str:
+    published = poem.get("date") or poem.get("year") or None
+    payload = {
+        "@context": "https://schema.org",
+        "@type": "CreativeWork",
+        "name": poem.get("title", ""),
+        "headline": poem.get("title", ""),
+        "description": poem.get("excerpt") or poem.get("mood") or "قصيدة من ديوان أثر.",
+        "url": url,
+        "inLanguage": "ar",
+        "author": {"@type": "Person", "name": poet},
+        "isPartOf": {"@type": "Book", "name": "أثر — ديوان الشعر"},
+    }
+    if published:
+        payload["datePublished"] = str(published)
+    return json.dumps(payload, ensure_ascii=False).replace("</", "<\\/")
+
+
+def render(poem: dict, site: dict, slug: str) -> str:
+    title = poem.get("title") or "قصيدة بلا عنوان"
+    poet = site.get("poet") or "صلاح الدين الخزاعي"
+    description = poem.get("excerpt") or poem.get("mood") or f"قصيدة «{title}» من ديوان أثر."
+    url = page_url(slug)
+    verses = poem.get("verses") or []
+    verse_html = "\n".join(
+        "        <div class=\"poem-page__verse\">\n"
+        f"          <p>{esc(v.get('sadr'))}</p>"
+        + (f"          <span aria-hidden=\"true\">◆</span>\n          <p>{esc(v.get('ajoz'))}</p>" if v.get("ajoz") else "")
+        + "\n        </div>"
+        for v in verses
+    )
+    meta = " · ".join(str(x) for x in [poem.get("category"), poem.get("year"), f"{len(verses)} بيتًا"] if x)
+    tags = " ".join(f"<li>{esc(tag)}</li>" for tag in poem.get("tags") or [])
+    tags_block = f"\n      <ul class=\"poem-page__tags\">{tags}</ul>" if tags else ""
+    return f'''<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{esc(title)} — ديوان أثر | {esc(poet)}</title>
+  <meta name="description" content="{esc(description)}">
+  <meta name="author" content="{esc(poet)}">
+  <link rel="canonical" href="{esc(url)}">
+  <link rel="icon" type="image/x-icon" href="../../favicon.ico">
+  <link rel="stylesheet" href="../../assets/css/style.css?v=41">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="أَثَر">
+  <meta property="og:title" content="{esc(title)} — ديوان أثر">
+  <meta property="og:description" content="{esc(description)}">
+  <meta property="og:url" content="{esc(url)}">
+  <meta property="og:image" content="{BASE_URL}/assets/img/og-athar.png">
+  <meta property="og:locale" content="ar_AR">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{esc(title)} — ديوان أثر">
+  <meta name="twitter:description" content="{esc(description)}">
+  <meta name="twitter:image" content="{BASE_URL}/assets/img/og-athar.png">
+  <script type="application/ld+json">{jsonld(poem, url, poet)}</script>
+</head>
+<body class="poem-page">
+  <main class="poem-page__main">
+    <div class="wrap">
+      <nav class="poem-page__nav" aria-label="مسار الصفحة">
+        <a href="../../">أثر</a>
+        <span aria-hidden="true">/</span>
+        <a href="../../#poems">كل القصائد</a>
+      </nav>
+      <article class="poem-page__article">
+        <header class="poem-page__head">
+          <p class="kicker">{esc(poem.get('category') or 'قصيدة')}</p>
+          <h1>{esc(title)}</h1>
+          <p class="poem-page__meta">{esc(meta)}</p>
+          {f'<p class="poem-page__mood">{esc(poem.get("mood"))}</p>' if poem.get('mood') else ''}
+          {f'<p class="poem-page__excerpt">{esc(description)}</p>' if description else ''}
+          {tags_block}
+        </header>
+        <div class="poem-page__verses" aria-label="نص القصيدة">
+{verse_html}
+        </div>
+        <footer class="poem-page__foot">
+          <p>من ديوان <a href="../../">أثر</a> — {esc(poet)}</p>
+          <a class="btn btn--line btn--sm" href="../../#poems">العودة إلى القصائد</a>
+        </footer>
+      </article>
+    </div>
+  </main>
+</body>
+</html>
+'''
+
+
+def main() -> None:
+    data = json.loads(DATA_PATH.read_text(encoding="utf-8"))
+    site = data.get("site") or {}
+    poems = data.get("poems") or []
+    if not poems:
+        raise SystemExit("No poems found")
+
+    OUT_DIR.mkdir(exist_ok=True)
+    expected: set[str] = set()
+    for poem in poems:
+        slug = slug_for(poem)
+        if slug in expected:
+            raise SystemExit(f"Duplicate generated slug: {slug}")
+        expected.add(slug)
+        target = OUT_DIR / slug
+        target.mkdir(parents=True, exist_ok=True)
+        (target / "index.html").write_text(render(poem, site, slug), encoding="utf-8")
+
+    for child in OUT_DIR.iterdir():
+        if child.is_dir() and child.name not in expected:
+            shutil.rmtree(child)
+
+    today = date.today().isoformat()
+    urls = [f"  <url>\n    <loc>{BASE_URL}/</loc>\n    <lastmod>{today}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>1.0</priority>\n  </url>"]
+    for slug in sorted(expected):
+        urls.append(f"  <url>\n    <loc>{page_url(slug)}</loc>\n    <lastmod>{today}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.8</priority>\n  </url>")
+    sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + '\n'.join(urls) + '\n</urlset>\n'
+    (ROOT / "sitemap.xml").write_text(sitemap, encoding="utf-8")
+
+    print(f"Generated {len(poems)} poem pages and sitemap.xml")
+
+
+if __name__ == "__main__":
+    main()
