@@ -594,6 +594,11 @@
 
   /* ---------- القائمة والجوال ---------- */
   const navToggle = $('#navToggle'), nav = $('#primaryNav');
+  const searchToggle = $('#searchToggle'), searchInput = $('#searchInput');
+  searchToggle.addEventListener('click', () => {
+    $('#poems').scrollIntoView({ behavior: 'smooth' });
+    setTimeout(() => searchInput.focus(), 350);
+  });
   navToggle.addEventListener('click', () => {
     const open = nav.classList.toggle('is-open');
     navToggle.setAttribute('aria-expanded', String(open));
