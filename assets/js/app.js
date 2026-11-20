@@ -596,7 +596,6 @@
   const navToggle = $('#navToggle'), nav = $('#primaryNav');
   const searchToggle = $('#searchToggle'), searchInput = $('#searchInput');
   searchToggle.addEventListener('click', () => {
-    $('#poems').scrollIntoView({ behavior: 'smooth' });
     setTimeout(() => searchInput.focus(), 350);
   });
   navToggle.addEventListener('click', () => {

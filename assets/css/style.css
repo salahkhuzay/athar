@@ -95,7 +95,7 @@ a { color: inherit; }
   content: ""; position: absolute; inset-inline: 50%; translate: 50% 0; inset-block-end: .1rem;
   width: 40%; height: 1.5px; background: var(--gold);
 }
-.topbar__tools { margin-inline-start: auto; display: flex; }
+.topbar__tools { margin-inline-start: auto; display: flex; gap: .35rem; }
 .nav { margin-inline-start: auto; }
 .topbar__tools { margin-inline-start: 0; }
 
@@ -474,6 +474,9 @@ a { color: inherit; }
 
 /* ---------- الاستجابة ---------- */
 @media (max-width: 860px) {
+  .topbar__tools { order: 1; }
+  .brand { order: 2; }
+  .nav { order: 3; }
   .nav-toggle { display: grid; }
   .brand__tag { display: none; }
   .nav {
