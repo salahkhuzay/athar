@@ -62,7 +62,7 @@
   const state = {
     data: { site: {}, categories: [], poems: [] },
     raw: '', source: '',
-    cat: 'all', q: '', re: null,
+    cat: 'all', q: '', re: null, sort: 'added',
     bookmarks: new Set(JSON.parse(store.get('athar-bookmarks', '[]') || '[]')),
     reader: { list: [], index: -1, manuscript: store.get('athar-manuscript', '0') === '1' }
   };
@@ -262,7 +262,14 @@
     if (state.cat === 'fav') list = list.filter((p) => state.bookmarks.has(p.id));
     else if (state.cat !== 'all') list = list.filter((p) => p.category === state.cat);
     if (state.re) list = list.filter((p) => state.re.test.test(poemText(p)));
-    return list.sort((a, b) => a.idx - b.idx);
+    const dateValue = (p) => p.date || p.year || '';
+    return list.sort((a, b) => {
+      if (state.sort === 'newest') return dateValue(b).localeCompare(dateValue(a), 'ar') || b.idx - a.idx;
+      if (state.sort === 'oldest') return dateValue(a).localeCompare(dateValue(b), 'ar') || a.idx - b.idx;
+      if (state.sort === 'alpha') return a.title.localeCompare(b.title, 'ar') || a.idx - b.idx;
+      if (state.sort === 'longest') return b.verses.length - a.verses.length || a.idx - b.idx;
+      return a.idx - b.idx;
+    });
   }
 
   /* ---------- البطاقات ---------- */
@@ -585,6 +592,10 @@
   $('#searchClear').addEventListener('click', () => {
     $('#searchInput').value = ''; $('#searchClear').hidden = true;
     state.q = ''; state.re = null; renderCards(); $('#searchInput').focus();
+  });
+  $('#sortSelect').addEventListener('change', (e) => {
+    state.sort = e.target.value;
+    renderCards();
   });
   $('#resetFilters').addEventListener('click', () => {
     $('#searchInput').value = ''; $('#searchClear').hidden = true;
