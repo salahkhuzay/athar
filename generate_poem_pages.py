@@ -26,6 +26,16 @@ def page_url(slug: str) -> str:
     return f"{BASE_URL}/poems/{quote(slug, safe='')}/"
 
 
+AR_MONTHS = ["كانون الثاني","شباط","آذار","نيسان","أيار","حزيران","تموز","آب","أيلول","تشرين الأول","تشرين الثاني","كانون الأول"]
+
+
+def fmt_date(poem: dict) -> str:
+    m = re.fullmatch(r"(\d{4})-(\d{2})-(\d{2})", str(poem.get("date") or ""))
+    if not m:
+        return str(poem.get("year") or "")
+    return f"{int(m.group(3))} {AR_MONTHS[int(m.group(2)) - 1]} {m.group(1)}"
+
+
 def verse_count(n: int) -> str:
     if n == 1: return "بيتٌ واحد"
     if n == 2: return "بيتان"
@@ -90,7 +100,7 @@ def render(poem: dict, site: dict, slug: str) -> str:
         + "\n        </div>"
         for v in verses
     )
-    meta = " · ".join(str(x) for x in [poem.get("category"), poem.get("year"), verse_count(len(verses))] if x)
+    meta = " · ".join(str(x) for x in [poem.get("category"), fmt_date(poem), verse_count(len(verses))] if x)
     tags = " ".join(f"<li>{esc(tag)}</li>" for tag in poem.get("tags") or [])
     tags_block = f"\n      <ul class=\"poem-page__tags\">{tags}</ul>" if tags else ""
     return f'''<!DOCTYPE html>

@@ -99,6 +99,14 @@
     return { json: null, raw: '', source: '' };
   }
 
+
+  const AR_MONTHS = ['كانون الثاني','شباط','آذار','نيسان','أيار','حزيران','تموز','آب','أيلول','تشرين الأول','تشرين الثاني','كانون الأول'];
+  function fmtDate(p) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(p.date || '');
+    if (!m) return p.year || '';
+    return parseInt(m[3], 10) + ' ' + AR_MONTHS[parseInt(m[2], 10) - 1] + ' ' + m[1];
+  }
+  function verseCount(n) { return n === 1 ? 'بيتٌ واحد' : n === 2 ? 'بيتان' : (n >= 3 && n <= 10) ? n + ' أبيات' : n + ' بيتاً'; }
   function normalize(json) {
     const site = json.site || {};
     const poems = (json.poems || []).map((p, i) => ({
@@ -290,7 +298,7 @@
     return '<article class="card reveal" data-id="' + esc(p.id) + '">' +
       '<div class="card__top">' +
         '<h3 class="card__title"><button type="button" class="js-open" data-id="' + esc(p.id) + '">' + hl(p.title, state.re) + '</button></h3>' +
-        (p.year ? '<span class="card__year">' + esc(p.year) + '</span>' : '') +
+        (fmtDate(p) ? '<span class="card__year">' + esc(fmtDate(p)) + '</span>' : '') +
       '</div>' +
       (p.mood ? '<p class="card__mood">' + hl(p.mood, state.re) + '</p>' : '') +
       '<div class="card__preview">' + preview + '</div>' +
@@ -355,7 +363,7 @@
   function paintReader() {
     const p = state.reader.list[state.reader.index];
     if (!p) return;
-    $('#readerMeta').textContent = [p.category, p.year, p.verses.length + ' بيتاً'].filter(Boolean).join(' · ');
+    $('#readerMeta').textContent = [p.category, fmtDate(p), verseCount(p.verses.length)].filter(Boolean).join(' · ');
     $('#readerTitle').textContent = p.title;
     $('#readerMood').textContent = p.mood || '';
     $('#readerVerses').innerHTML = p.verses.map((v) =>
@@ -684,7 +692,7 @@
     }
     area.innerHTML = '<h1>أَثَر — ديوان ' + esc(state.data.site.poet || '') + '</h1>' +
       state.data.poems.map((p) =>
-        '<section><h2>' + esc(p.title) + ' <span>(' + esc([p.category, p.year].filter(Boolean).join(' · ')) + ')</span></h2>' +
+        '<section><h2>' + esc(p.title) + ' <span>(' + esc([p.category, fmtDate(p)].filter(Boolean).join(' · ')) + ')</span></h2>' +
         p.verses.map((v) => '<p class="pv">' + esc(v.sadr) + (v.ajoz ? ' <span class="ps">◆</span> ' + esc(v.ajoz) : '') + '</p>').join('') +
         '</section>').join('');
   }
