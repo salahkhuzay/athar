@@ -8,7 +8,10 @@
   <meta name="author" content="صلاح الدين الخزاعي">
   <link rel="canonical" href="https://athar-poetry.com/poems/%D8%A8%D9%8A%D9%86-%D8%A7%D9%84%D8%AE%D9%84%D9%82-%D9%88%D8%A7%D9%84%D8%AC%D9%85%D8%B1/">
   <link rel="icon" type="image/x-icon" href="../../favicon.ico">
-  <link rel="stylesheet" href="../../assets/css/style.css?v=41">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Aref+Ruqaa:wght@400;700&family=Cairo:wght@600;700;800&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/style.css?v=42">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="أَثَر">
   <meta property="og:title" content="بينَ الخُلُقِ والجمر — ديوان أثر">
@@ -20,7 +23,7 @@
   <meta name="twitter:title" content="بينَ الخُلُقِ والجمر — ديوان أثر">
   <meta name="twitter:description" content="عن قلبٍ طيبٍ مزّقته الإساءة بين خُلُقٍ تربّى عليه وجمرٍ يدفعه للتشفي.">
   <meta name="twitter:image" content="https://athar-poetry.com/assets/img/og-athar.png">
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "CreativeWork", "name": "بينَ الخُلُقِ والجمر", "headline": "بينَ الخُلُقِ والجمر", "description": "عن قلبٍ طيبٍ مزّقته الإساءة بين خُلُقٍ تربّى عليه وجمرٍ يدفعه للتشفي.", "url": "https://athar-poetry.com/poems/%D8%A8%D9%8A%D9%86-%D8%A7%D9%84%D8%AE%D9%84%D9%82-%D9%88%D8%A7%D9%84%D8%AC%D9%85%D8%B1/", "inLanguage": "ar", "author": {"@type": "Person", "name": "صلاح الدين الخزاعي"}, "isPartOf": {"@type": "Book", "name": "أثر — ديوان الشعر"}, "datePublished": "2026"}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "CreativeWork", "name": "بينَ الخُلُقِ والجمر", "headline": "بينَ الخُلُقِ والجمر", "description": "عن قلبٍ طيبٍ مزّقته الإساءة بين خُلُقٍ تربّى عليه وجمرٍ يدفعه للتشفي.", "url": "https://athar-poetry.com/poems/%D8%A8%D9%8A%D9%86-%D8%A7%D9%84%D8%AE%D9%84%D9%82-%D9%88%D8%A7%D9%84%D8%AC%D9%85%D8%B1/", "inLanguage": "ar", "author": {"@type": "Person", "name": "صلاح الدين الخزاعي"}, "isPartOf": {"@type": "Book", "name": "أثر — ديوان الشعر"}, "datePublished": "2026-09-14"}</script>
 </head>
 <body class="poem-page">
   <main class="poem-page__main">
@@ -34,7 +37,7 @@
         <header class="poem-page__head">
           <p class="kicker">تأمل</p>
           <h1>بينَ الخُلُقِ والجمر</h1>
-          <p class="poem-page__meta">تأمل · 2026 · 7 بيتًا</p>
+          <p class="poem-page__meta">تأمل · 2026 · 7 أبيات</p>
           <p class="poem-page__mood">صراعُ الطيبِ مع جرحه</p>
           <p class="poem-page__excerpt">عن قلبٍ طيبٍ مزّقته الإساءة بين خُلُقٍ تربّى عليه وجمرٍ يدفعه للتشفي.</p>
           
@@ -70,12 +73,29 @@
           <p>فَلا تَعْجَبوا مِنْ جَفْوِهِ وامتِناعِـهِ</p>
         </div>
         </div>
+        
         <footer class="poem-page__foot">
           <p>من ديوان <a href="../../">أثر</a> — صلاح الدين الخزاعي</p>
-          <a class="btn btn--line btn--sm" href="../../#poems">العودة إلى القصائد</a>
+          <div class="poem-page__actions">
+            <button class="btn btn--line btn--sm" type="button" id="shareBtn" data-title="بينَ الخُلُقِ والجمر" data-url="https://athar-poetry.com/poems/%D8%A8%D9%8A%D9%86-%D8%A7%D9%84%D8%AE%D9%84%D9%82-%D9%88%D8%A7%D9%84%D8%AC%D9%85%D8%B1/">مشاركة</button>
+            <a class="btn btn--line btn--sm" href="../../#poems">العودة إلى القصائد</a>
+          </div>
         </footer>
       </article>
     </div>
   </main>
+  <script>
+  (function(){
+    var b=document.getElementById('shareBtn'); if(!b) return;
+    b.addEventListener('click', async function(){
+      var t=b.getAttribute('data-title'), u=b.getAttribute('data-url');
+      try {
+        if (navigator.share) { await navigator.share({ title: t + ' — صلاح الدين الخزاعي', text: t + ' — ديوان أثر', url: u }); return; }
+        await navigator.clipboard.writeText(u);
+        var old=b.textContent; b.textContent='نُسخ الرابط'; setTimeout(function(){ b.textContent=old; }, 1800);
+      } catch(e) {}
+    });
+  })();
+  </script>
 </body>
 </html>

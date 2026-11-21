@@ -302,6 +302,8 @@ a { color: inherit; }
 .poem-page__verse span { color: var(--gold); font-size: .65rem; }
 .poem-page__foot { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block-start: 1.2rem; border-block-start: 1px solid var(--line-soft); color: var(--ink-faint); font-size: .84rem; }
 .poem-page__foot p { margin: 0; }
+.poem-page__actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+.poem-page__audio { display: block; width: 100%; margin: 0 0 1.2rem; }
 .poem-page__foot a:not(.btn) { color: var(--gold-bright); }
 
 /* ---------- فاصل ---------- */
