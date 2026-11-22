@@ -84,7 +84,8 @@ def jsonld(poem: dict, url: str, poet: str) -> str:
     return json.dumps(payload, ensure_ascii=False).replace("</", "<\\/")
 
 
-def render(poem: dict, site: dict, slug: str) -> str:
+def render(poem: dict, site: dict, slug: str, labels: dict | None = None) -> str:
+    cat = (labels or {}).get(poem.get("category"), poem.get("category"))
     title = poem.get("title") or "قصيدة بلا عنوان"
     poet = site.get("poet") or "صلاح الدين الخزاعي"
     description = poem.get("excerpt") or poem.get("mood") or f"قصيدة «{title}» من ديوان أثر."
@@ -100,7 +101,7 @@ def render(poem: dict, site: dict, slug: str) -> str:
         + "\n        </div>"
         for v in verses
     )
-    meta = " · ".join(str(x) for x in [poem.get("category"), fmt_date(poem), verse_count(len(verses))] if x)
+    meta = " · ".join(str(x) for x in [cat, fmt_date(poem), verse_count(len(verses))] if x)
     tags = " ".join(f"<li>{esc(tag)}</li>" for tag in poem.get("tags") or [])
     tags_block = f"\n      <ul class=\"poem-page__tags\">{tags}</ul>" if tags else ""
     return f'''<!DOCTYPE html>
@@ -140,7 +141,7 @@ def render(poem: dict, site: dict, slug: str) -> str:
       </nav>
       <article class="poem-page__article">
         <header class="poem-page__head">
-          <p class="kicker">{esc(poem.get('category') or 'قصيدة')}</p>
+          <p class="kicker">{esc(cat or 'قصيدة')}</p>
           <h1>{esc(title)}</h1>
           <p class="poem-page__meta">{esc(meta)}</p>
           {f'<p class="poem-page__mood">{esc(poem.get("mood"))}</p>' if poem.get('mood') else ''}
@@ -182,6 +183,7 @@ def render(poem: dict, site: dict, slug: str) -> str:
 def main() -> None:
     data = json.loads(DATA_PATH.read_text(encoding="utf-8"))
     site = data.get("site") or {}
+    labels = {c.get("id"): c.get("label") or c.get("id") for c in data.get("categories") or []}
     poems = data.get("poems") or []
     if not poems:
         raise SystemExit("No poems found")
@@ -195,7 +197,7 @@ def main() -> None:
         expected.add(slug)
         target = OUT_DIR / slug
         target.mkdir(parents=True, exist_ok=True)
-        (target / "index.html").write_text(render(poem, site, slug), encoding="utf-8")
+        (target / "index.html").write_text(render(poem, site, slug, labels), encoding="utf-8")
 
     for old, new in REDIRECTS.items():
         if new in expected and old not in expected:

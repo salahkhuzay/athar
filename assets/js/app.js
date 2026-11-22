@@ -106,6 +106,7 @@
     if (!m) return p.year || '';
     return parseInt(m[3], 10) + ' ' + AR_MONTHS[parseInt(m[2], 10) - 1] + ' ' + m[1];
   }
+  function catLabel(id) { const c = (state.data && state.data.categories || []).find((c) => c.id === id); return c ? c.label : (id || ''); }
   function verseCount(n) { return n === 1 ? 'بيتٌ واحد' : n === 2 ? 'بيتان' : (n >= 3 && n <= 10) ? n + ' أبيات' : n + ' بيتاً'; }
   function normalize(json) {
     const site = json.site || {};
@@ -363,7 +364,7 @@
   function paintReader() {
     const p = state.reader.list[state.reader.index];
     if (!p) return;
-    $('#readerMeta').textContent = [p.category, fmtDate(p), verseCount(p.verses.length)].filter(Boolean).join(' · ');
+    $('#readerMeta').textContent = [catLabel(p.category), fmtDate(p), verseCount(p.verses.length)].filter(Boolean).join(' · ');
     $('#readerTitle').textContent = p.title;
     $('#readerMood').textContent = p.mood || '';
     $('#readerVerses').innerHTML = p.verses.map((v) =>
@@ -590,7 +591,7 @@
     $('#audioList').innerHTML = list.map((p) =>
       '<div class="audiolib__row">' +
         '<button class="icon-btn js-play" type="button" data-id="' + esc(p.id) + '" aria-label="تشغيل ' + esc(p.title) + '"><svg viewBox="0 0 24 24" aria-hidden="true">' + I.speaker + '</svg></button>' +
-        '<b>' + esc(p.title) + '</b><span>' + esc(p.category || '') + '</span>' +
+        '<b>' + esc(p.title) + '</b><span>' + esc(catLabel(p.category)) + '</span>' +
       '</div>').join('');
   }
 
@@ -692,7 +693,7 @@
     }
     area.innerHTML = '<h1>أَثَر — ديوان ' + esc(state.data.site.poet || '') + '</h1>' +
       state.data.poems.map((p) =>
-        '<section><h2>' + esc(p.title) + ' <span>(' + esc([p.category, fmtDate(p)].filter(Boolean).join(' · ')) + ')</span></h2>' +
+        '<section><h2>' + esc(p.title) + ' <span>(' + esc([catLabel(p.category), fmtDate(p)].filter(Boolean).join(' · ')) + ')</span></h2>' +
         p.verses.map((v) => '<p class="pv">' + esc(v.sadr) + (v.ajoz ? ' <span class="ps">◆</span> ' + esc(v.ajoz) : '') + '</p>').join('') +
         '</section>').join('');
   }
