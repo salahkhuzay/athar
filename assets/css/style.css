@@ -776,3 +776,11 @@ a { color: inherit; }
   .admin__tab.is-active{border-color:var(--gold)}
   .admin__tab small{display:block;font-size:.74rem}
 }
+
+/* ---------- مقطوعات رباعية (form: stanza) ---------- */
+.is-stanza .stanza, .poem-page__verses.is-stanza .stanza { padding-block: .9rem 1.1rem; border-block-end: 1px solid var(--line); }
+.is-stanza .stanza:last-child, .poem-page__verses.is-stanza .stanza:last-child { border-block-end: 0; }
+.is-stanza .rverse, .poem-page__verses.is-stanza .poem-page__verse { border-block-end: 0; padding-block: .35rem; }
+.is-stanza .is-close p:last-child, .poem-page__verses.is-stanza .is-close p:last-child { color: var(--gold-bright); font-size: 1.08em; letter-spacing: .01em; }
+.is-stanza .is-close p:last-child::after, .poem-page__verses.is-stanza .is-close p:last-child::after { content: " ✦"; color: var(--gold); font-size: .6em; vertical-align: middle; }
+.reader__panel.is-manuscript .is-stanza .is-close p:last-child { color: #8a6a33; }

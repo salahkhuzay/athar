@@ -107,6 +107,18 @@
     return parseInt(m[3], 10) + ' ' + AR_MONTHS[parseInt(m[2], 10) - 1] + ' ' + m[1];
   }
   function catLabel(id) { const c = (state.data && state.data.categories || []).find((c) => c.id === id); return c ? c.label : (id || ''); }
+  function stanzaCount(n) { return n === 1 ? 'مقطوعةٌ واحدة' : n === 2 ? 'مقطوعتان' : (n >= 3 && n <= 10) ? n + ' مقطوعات' : n + ' مقطوعة'; }
+  function countLabel(p) { return p.form === 'stanza' ? stanzaCount(Math.ceil(p.verses.length / 2)) : verseCount(p.verses.length); }
+  function versesHTML(p, cls) {
+    const row = (v, extra) => '<div class="' + cls + (extra || '') + '"><p>' + esc(v.sadr) + '</p>' + (v.ajoz ? '<span class="sep" aria-hidden="true"></span><p>' + esc(v.ajoz) + '</p>' : '') + '</div>';
+    if (p.form !== 'stanza') return p.verses.map((v) => row(v)).join('');
+    let out = '';
+    for (let i = 0; i < p.verses.length; i += 2) {
+      const a = p.verses[i], b = p.verses[i + 1];
+      out += '<div class="stanza">' + row(a) + (b ? row(b, ' is-close') : '') + '</div>';
+    }
+    return out;
+  }
   function verseCount(n) { return n === 1 ? 'بيتٌ واحد' : n === 2 ? 'بيتان' : (n >= 3 && n <= 10) ? n + ' أبيات' : n + ' بيتاً'; }
   function normalize(json) {
     const site = json.site || {};
@@ -115,6 +127,7 @@
       id: p.id || ('poem-' + (i + 1)),
       title: p.title || 'بلا عنوان',
       category: p.category || '',
+      form: p.form || '',
       year: p.year || '', date: p.date || '',
       mood: p.mood || '',
       excerpt: p.excerpt || p.epigraph || '',
@@ -364,11 +377,11 @@
   function paintReader() {
     const p = state.reader.list[state.reader.index];
     if (!p) return;
-    $('#readerMeta').textContent = [catLabel(p.category), fmtDate(p), verseCount(p.verses.length)].filter(Boolean).join(' · ');
+    $('#readerMeta').textContent = [catLabel(p.category), fmtDate(p), countLabel(p)].filter(Boolean).join(' · ');
     $('#readerTitle').textContent = p.title;
     $('#readerMood').textContent = p.mood || '';
-    $('#readerVerses').innerHTML = p.verses.map((v) =>
-      '<div class="rverse"><p>' + esc(v.sadr) + '</p>' + (v.ajoz ? '<span class="sep" aria-hidden="true"></span><p>' + esc(v.ajoz) + '</p>' : '') + '</div>').join('');
+    $('#readerVerses').innerHTML = versesHTML(p, 'rverse');
+    $('#readerVerses').classList.toggle('is-stanza', p.form === 'stanza');
     const fav = state.bookmarks.has(p.id);
     const favBtn = $('#readerFav');
     favBtn.classList.toggle('is-on', fav);

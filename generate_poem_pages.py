@@ -36,6 +36,13 @@ def fmt_date(poem: dict) -> str:
     return f"{int(m.group(3))} {AR_MONTHS[int(m.group(2)) - 1]} {m.group(1)}"
 
 
+def stanza_count(n: int) -> str:
+    if n == 1: return "مقطوعةٌ واحدة"
+    if n == 2: return "مقطوعتان"
+    if 3 <= n <= 10: return f"{n} مقطوعات"
+    return f"{n} مقطوعة"
+
+
 def verse_count(n: int) -> str:
     if n == 1: return "بيتٌ واحد"
     if n == 2: return "بيتان"
@@ -94,14 +101,22 @@ def render(poem: dict, site: dict, slug: str, labels: dict | None = None) -> str
     verses = poem.get("verses") or []
     audio = poem.get("audio") or ""
     audio_block = f'<audio class="poem-page__audio" controls preload="none" src="../../{esc(audio)}" aria-label="استمع بصوت الشاعر"></audio>' if audio else ""
-    verse_html = "\n".join(
-        "        <div class=\"poem-page__verse\">\n"
-        f"          <p>{esc(v.get('sadr'))}</p>"
-        + (f"          <span aria-hidden=\"true\">◆</span>\n          <p>{esc(v.get('ajoz'))}</p>" if v.get("ajoz") else "")
-        + "\n        </div>"
-        for v in verses
-    )
-    meta = " · ".join(str(x) for x in [cat, fmt_date(poem), verse_count(len(verses))] if x)
+    def row(v, extra=""):
+        return ("        <div class=\"poem-page__verse" + extra + "\">\n"
+                f"          <p>{esc(v.get('sadr'))}</p>"
+                + (f"          <span aria-hidden=\"true\">◆</span>\n          <p>{esc(v.get('ajoz'))}</p>" if v.get("ajoz") else "")
+                + "\n        </div>")
+    stanza = poem.get("form") == "stanza"
+    if stanza:
+        blocks = []
+        for i in range(0, len(verses), 2):
+            inner = row(verses[i]) + ("\n" + row(verses[i + 1], " is-close") if i + 1 < len(verses) else "")
+            blocks.append("        <div class=\"stanza\">\n" + inner + "\n        </div>")
+        verse_html = "\n".join(blocks)
+    else:
+        verse_html = "\n".join(row(v) for v in verses)
+    stanza_cls = " is-stanza" if stanza else ""
+    meta = " · ".join(str(x) for x in [cat, fmt_date(poem), (stanza_count((len(verses) + 1) // 2) if stanza else verse_count(len(verses)))] if x)
     tags = " ".join(f"<li>{esc(tag)}</li>" for tag in poem.get("tags") or [])
     tags_block = f"\n      <ul class=\"poem-page__tags\">{tags}</ul>" if tags else ""
     return f'''<!DOCTYPE html>
@@ -148,7 +163,7 @@ def render(poem: dict, site: dict, slug: str, labels: dict | None = None) -> str
           {f'<p class="poem-page__excerpt">{esc(description)}</p>' if description else ''}
           {tags_block}
         </header>
-        <div class="poem-page__verses" aria-label="نص القصيدة">
+        <div class="poem-page__verses{stanza_cls}" aria-label="نص القصيدة">
 {verse_html}
         </div>
         {audio_block}
